@@ -1,0 +1,361 @@
+name: Day 01 — Fraud Detection Agent CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "day-01-fraud-detection/**"
+      - ".github/workflows/day-01-fraud-detection.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "day-01-fraud-detection/**"
+
+env:
+  PYTHON_VERSION: "3.11"
+  WORKING_DIR: day-01-fraud-detection
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/enterprise-ai-agents/fraud-detection
+  AZURE_RESOURCE_GROUP: rg-fraud-agent-prod
+  AZURE_LOCATION: eastus2
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+  id-token: write
+
+jobs:
+  # ── 1. Lint & Static Analysis ──────────────────────────────────────────────
+  lint-and-sast:
+    name: Lint + SAST
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff lint
+        run: pip install ruff && ruff check src/ tests/ --output-format github
+
+      - name: Bandit SAST scan
+        run: bandit -r src/ -f json -o bandit-report.json --severity-level medium
+        continue-on-error: false
+
+      - name: Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/python
+            p/owasp-top-ten
+            p/secrets
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: detect-secrets scan
+        run: |
+          pip install detect-secrets
+          detect-secrets scan --baseline .secrets.baseline 2>/dev/null || \
+          detect-secrets scan > .secrets.baseline
+          detect-secrets audit .secrets.baseline --report
+
+      - name: Upload SAST reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sast-reports
+          path: ${{ env.WORKING_DIR }}/bandit-report.json
+
+  # ── 2. Unit Tests ─────────────────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/unit -v \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            -p no:warnings
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ${{ env.WORKING_DIR }}/coverage.xml
+          flags: day01-unit
+          fail_ci_if_error: false
+
+  # ── 3. Integration Tests ──────────────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run integration tests
+        run: pytest tests/integration -v --tb=short
+
+  # ── 4. SCA — Dependency Vulnerability Scan ────────────────────────────────
+  dependency-scan:
+    name: SCA — Snyk
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Snyk Python dependency scan
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=${{ env.WORKING_DIR }}/requirements.txt
+        continue-on-error: true
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "fraud-detection-agent"
+          path: ${{ env.WORKING_DIR }}
+          format: "HTML"
+          args: --failOnCVSS 7
+
+  # ── 5. IaC Security Scan ──────────────────────────────────────────────────
+  iac-scan:
+    name: IaC Scan — Checkov
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov Bicep scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ${{ env.WORKING_DIR }}/infra
+          framework: bicep
+          soft_fail: false
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Upload Checkov SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov-results.sarif
+
+  # ── 6. Build & Trivy Image Scan ───────────────────────────────────────────
+  build-and-scan:
+    name: Docker Build + Trivy Scan
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, dependency-scan, iac-scan]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.WORKING_DIR }}
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Trivy image vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:latest
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - name: Push image (main branch only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.WORKING_DIR }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  # ── 7. Deploy to Staging ─────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy — Staging
+    runs-on: ubuntu-latest
+    needs: build-and-scan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: ${{ steps.get-url.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep to staging
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}-staging
+          template: ${{ env.WORKING_DIR }}/infra/main.bicep
+          parameters: >
+            environment=staging
+            location=${{ env.AZURE_LOCATION }}
+            adminObjectId=${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+
+      - name: Get staging URL
+        id: get-url
+        run: |
+          URL=$(az containerapp show \
+            --name ca-fraud-agent-staging \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
+
+  # ── 8. DAST on Staging ───────────────────────────────────────────────────
+  dast-scan:
+    name: DAST — OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ZAP API scan
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: ${{ needs.deploy-staging.outputs.url }}/openapi.json
+          fail_action: false
+          cmd_options: "-a -j"
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: report_json.json
+
+  # ── 9. Deploy to Production ───────────────────────────────────────────────
+  deploy-production:
+    name: Deploy — Production
+    runs-on: ubuntu-latest
+    needs: dast-scan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: ${{ steps.get-url.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep to production
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ${{ env.WORKING_DIR }}/infra/main.bicep
+          parameters: >
+            environment=prod
+            location=${{ env.AZURE_LOCATION }}
+            adminObjectId=${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+
+      - name: Get production URL
+        id: get-url
+        run: |
+          URL=$(az containerapp show \
+            --name ca-fraud-agent-prod \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --query properties.configuration.ingress.fqdn -o tsv)
+          echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Production smoke test
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "${{ steps.get-url.outputs.url }}/health")
+          [ "${HTTP_CODE}" == "200" ] || (echo "Smoke test FAILED: HTTP ${HTTP_CODE}" && exit 1)
+          echo "Production health check PASSED"
+
+      - name: Notify deployment
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: "Day 01 Fraud Detection Agent — Production deployment ${{ job.status }}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
