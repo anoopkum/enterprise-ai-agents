@@ -32,7 +32,7 @@ resource fraudAlertsQueue 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-pre
   name: 'fraud-alerts'
   properties: {
     lockDuration: 'PT5M'
-    maxSizeInMegabytes: isProduction ? 1024 : 256
+    maxSizeInMegabytes: 1024  // Minimum valid value; prod uses same (Standard tier max without Premium)
     requiresDuplicateDetection: true
     duplicateDetectionHistoryTimeWindow: 'PT10M'
     maxDeliveryCount: isProduction ? 3 : 2
@@ -46,7 +46,7 @@ resource reviewQueue 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-preview'
   name: 'review-queue'
   properties: {
     lockDuration: 'PT5M'
-    maxSizeInMegabytes: isProduction ? 1024 : 256
+    maxSizeInMegabytes: 1024  // Minimum valid value; prod uses same (Standard tier max without Premium)
     maxDeliveryCount: isProduction ? 5 : 2
     defaultMessageTimeToLive: isProduction ? 'P7D' : 'PT4H'
   }

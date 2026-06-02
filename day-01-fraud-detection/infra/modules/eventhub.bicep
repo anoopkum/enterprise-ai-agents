@@ -38,7 +38,7 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
   properties: {
     messageRetentionInDays: messageRetentionDays
     partitionCount: partitionCount
-    // Capture is a Standard-only feature — skip in dev to avoid storage cost
+    // Capture is Standard-only — omit entirely in dev (API rejects {enabled:false} without destination)
     captureDescription: isProduction ? {
       enabled: true
       encoding: 'Avro'
@@ -50,10 +50,7 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
           archiveNameFormat: '{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}'
         }
       }
-    } : {
-      enabled: false
-      encoding: 'Avro'
-    }
+    } : null
   }
 }
 
