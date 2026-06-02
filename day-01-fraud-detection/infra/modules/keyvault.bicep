@@ -4,10 +4,10 @@ param tags object
 param adminObjectId string
 param isProduction bool
 
-// Dev: soft-delete 7 days (minimum), purge protection off (allows manual cleanup)
-// Prod: soft-delete 90 days, purge protection on (compliance requirement)
+// Dev: soft-delete 7 days (minimum), purge protection omitted (defaults false, allows cleanup)
+// Prod: soft-delete 90 days, purge protection on (compliance requirement, irreversible)
+// NOTE: enablePurgeProtection cannot be set to false once true — so we omit it in dev
 var softDeleteRetentionDays = isProduction ? 90 : 7
-var enablePurgeProtection = isProduction  // false in dev = can delete+recreate freely
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: name
@@ -16,13 +16,14 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   properties: {
     sku: {
       family: 'A'
-      name: 'standard'  // Same SKU both envs — standard is cheapest
+      name: 'standard'
     }
     tenantId: subscription().tenantId
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: softDeleteRetentionDays
-    enablePurgeProtection: enablePurgeProtection
+    // Purge protection: only set in prod (omitting in dev = false, but won't conflict on redeploy)
+    enablePurgeProtection: isProduction ? true : null
     // Dev: public access to avoid private endpoint cost; Prod: locked down
     publicNetworkAccess: isProduction ? 'Disabled' : 'Enabled'
     networkAcls: isProduction ? {
