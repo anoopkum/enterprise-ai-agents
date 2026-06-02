@@ -1,4 +1,5 @@
-@description('Environment name (dev/staging/prod)')
+@description('Environment name: dev | staging | prod')
+@allowed(['dev', 'staging', 'prod'])
 param environment string = 'dev'
 
 @description('Azure region for all resources')
@@ -7,8 +8,12 @@ param location string = resourceGroup().location
 @description('Project identifier prefix')
 param projectName string = 'fraud-agent'
 
-@description('Azure AD Object ID for Key Vault access policy')
+@description('Azure AD Object ID for Key Vault admin role')
 param adminObjectId string
+
+// Single flag that gates every cost-sensitive setting below
+var isProduction = environment == 'prod'
+var isStaging    = environment == 'staging'
 
 var prefix = '${projectName}-${environment}'
 var tags = {
@@ -17,6 +22,7 @@ var tags = {
   managedBy: 'bicep'
   day: '01'
   agent: 'fraud-detection'
+  costCenter: isProduction ? 'prod-banking' : 'dev-test'
 }
 
 // ─── Key Vault ───────────────────────────────────────────────────────────────
@@ -27,6 +33,7 @@ module keyVault 'modules/keyvault.bicep' = {
     location: location
     tags: tags
     adminObjectId: adminObjectId
+    isProduction: isProduction
   }
 }
 
@@ -38,6 +45,7 @@ module cosmosDb 'modules/cosmosdb.bicep' = {
     location: location
     tags: tags
     keyVaultName: keyVault.outputs.name
+    isProduction: isProduction
   }
 }
 
@@ -50,6 +58,7 @@ module eventHub 'modules/eventhub.bicep' = {
     location: location
     tags: tags
     keyVaultName: keyVault.outputs.name
+    isProduction: isProduction
   }
 }
 
@@ -61,10 +70,11 @@ module serviceBus 'modules/servicebus.bicep' = {
     location: location
     tags: tags
     keyVaultName: keyVault.outputs.name
+    isProduction: isProduction
   }
 }
 
-// ─── Azure AI Foundry (AI Hub + Project) ─────────────────────────────────────
+// ─── Azure AI Foundry ─────────────────────────────────────────────────────────
 module aiFoundry 'modules/ai_foundry.bicep' = {
   name: 'aiFoundryDeploy'
   params: {
@@ -73,10 +83,11 @@ module aiFoundry 'modules/ai_foundry.bicep' = {
     location: location
     tags: tags
     keyVaultId: keyVault.outputs.id
+    isProduction: isProduction
   }
 }
 
-// ─── Container Apps Environment + App ────────────────────────────────────────
+// ─── Container Apps ───────────────────────────────────────────────────────────
 module containerApp 'modules/container_app.bicep' = {
   name: 'containerAppDeploy'
   params: {
@@ -88,6 +99,8 @@ module containerApp 'modules/container_app.bicep' = {
     cosmosEndpoint: cosmosDb.outputs.endpoint
     eventHubNamespace: eventHub.outputs.namespaceName
     aiFoundryConnectionString: aiFoundry.outputs.connectionString
+    environmentName: environment
+    isProduction: isProduction
   }
 }
 
@@ -99,6 +112,7 @@ module appInsights 'modules/app_insights.bicep' = {
     location: location
     tags: tags
     keyVaultName: keyVault.outputs.name
+    isProduction: isProduction
   }
 }
 
@@ -106,3 +120,4 @@ output containerAppUrl string = containerApp.outputs.url
 output aiFoundryProjectName string = aiFoundry.outputs.projectName
 output cosmosDbEndpoint string = cosmosDb.outputs.endpoint
 output eventHubNamespace string = eventHub.outputs.namespaceName
+output estimatedMonthlyCost string = isProduction ? '~$3,275/mo' : (isStaging ? '~$1,200/mo' : '~$800/mo')

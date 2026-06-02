@@ -6,8 +6,19 @@ param keyVaultName string
 param cosmosEndpoint string
 param eventHubNamespace string
 param aiFoundryConnectionString string
+param environmentName string
+param isProduction bool
 
 var containerImage = 'ghcr.io/anoopkum/enterprise-ai-agents/fraud-detection:latest'
+
+// Dev: 0.25 vCPU / 0.5Gi, min 0 replicas (scales to zero = zero idle cost)
+// Staging: 0.5 vCPU / 1Gi, min 1 replica
+// Prod: 0.5 vCPU / 1Gi, min 2 replicas for HA
+var cpuCores = isProduction ? '0.5' : '0.25'
+var memoryGi = isProduction ? '1Gi' : '0.5Gi'
+var minReplicas = isProduction ? 2 : (environmentName == 'staging' ? 1 : 0)
+var maxReplicas = isProduction ? 20 : (environmentName == 'staging' ? 5 : 3)
+var logRetentionDays = isProduction ? 30 : 7
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'law-${envName}'
@@ -15,7 +26,13 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   tags: tags
   properties: {
     sku: { name: 'PerGB2018' }
-    retentionInDays: 30
+    retentionInDays: logRetentionDays
+    // Daily cap prevents runaway log ingestion cost in dev
+    workspaceCapping: isProduction ? {
+      dailyQuotaGb: -1  // Unlimited in prod
+    } : {
+      dailyQuotaGb: json('0.5')  // 500MB/day cap in dev (~$1.50/mo max)
+    }
   }
 }
 
@@ -37,6 +54,8 @@ resource containerAppEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
         workloadProfileType: 'Consumption'
       }
     ]
+    // Zone redundancy: prod only
+    zoneRedundant: isProduction
   }
 }
 
@@ -53,7 +72,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
     configuration: {
       activeRevisionsMode: 'Single'
       ingress: {
-        external: false  // internal only; fronted by API Management
+        external: !isProduction  // Dev: external for easy testing; Prod: internal
         targetPort: 8000
         transport: 'http'
         allowInsecure: false
@@ -61,7 +80,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       secrets: [
         {
           name: 'cosmos-endpoint'
-          keyVaultUrl: 'https://${keyVaultName}${environment().suffixes.keyvaultDns}/secrets/cosmos-connection-string'
+          keyVaultUrl: 'https://${keyVaultName}${az.environment().suffixes.keyvaultDns}/secrets/cosmos-connection-string'
           identity: 'system'
         }
         {
@@ -76,15 +95,15 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'fraud-agent'
           image: containerImage
           resources: {
-            cpu: json('0.5')
-            memory: '1Gi'
+            cpu: json(cpuCores)
+            memory: memoryGi
           }
           env: [
             { name: 'COSMOS_DB_ENDPOINT', value: cosmosEndpoint }
             { name: 'COSMOS_DB_NAME', value: 'frauddb' }
-            { name: 'AZURE_OPENAI_DEPLOYMENT', value: 'gpt-4o' }
+            { name: 'AZURE_OPENAI_DEPLOYMENT', value: isProduction ? 'gpt-4o' : 'gpt-4o-mini' }
             { name: 'AI_FOUNDRY_CONNECTION_STRING', secretRef: 'ai-foundry-conn' }
-            { name: 'ENVIRONMENT', value: 'production' }
+            { name: 'ENVIRONMENT', value: environmentName }
             { name: 'EVENT_HUB_NAMESPACE', value: eventHubNamespace }
           ]
           probes: [
@@ -92,24 +111,29 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
               type: 'Liveness'
               httpGet: { path: '/health', port: 8000 }
               initialDelaySeconds: 10
-              periodSeconds: 30
+              periodSeconds: isProduction ? 30 : 60
             }
             {
               type: 'Readiness'
               httpGet: { path: '/health', port: 8000 }
               initialDelaySeconds: 5
-              periodSeconds: 10
+              periodSeconds: isProduction ? 10 : 30
             }
           ]
         }
       ]
       scale: {
-        minReplicas: 2
-        maxReplicas: 20
+        minReplicas: minReplicas
+        maxReplicas: maxReplicas
         rules: [
           {
             name: 'http-scale'
-            http: { metadata: { concurrentRequests: '10' } }
+            http: {
+              metadata: {
+                // Prod: scale at 10 concurrent; Dev: scale at 5
+                concurrentRequests: isProduction ? '10' : '5'
+              }
+            }
           }
         ]
       }

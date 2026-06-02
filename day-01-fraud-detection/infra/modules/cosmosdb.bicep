@@ -2,6 +2,29 @@ param accountName string
 param location string
 param tags object
 param keyVaultName string
+param isProduction bool
+
+// Dev/Staging: 400 RU manual, no zone-redundancy, no failover → ~$60/mo
+// Prod:        4000 RU autoscale, zone-redundant, auto-failover → ~$1,100/mo
+var throughput = isProduction ? null : 400   // null = use autoscaleSettings
+var maxThroughput = isProduction ? 4000 : null
+var zoneRedundant = isProduction
+var enableAutomaticFailover = isProduction
+var backupPolicy = isProduction ? {
+  type: 'Periodic'
+  periodicModeProperties: {
+    backupIntervalInMinutes: 240
+    backupRetentionIntervalInHours: 720
+    backupStorageRedundancy: 'Geo'
+  }
+} : {
+  type: 'Periodic'
+  periodicModeProperties: {
+    backupIntervalInMinutes: 1440  // Daily backup in dev
+    backupRetentionIntervalInHours: 48
+    backupStorageRedundancy: 'Local'
+  }
+}
 
 resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview' = {
   name: accountName
@@ -11,20 +34,22 @@ resource cosmosAccount 'Microsoft.DocumentDB/databaseAccounts@2024-02-15-preview
   properties: {
     databaseAccountOfferType: 'Standard'
     consistencyPolicy: {
-      defaultConsistencyLevel: 'Session'
+      defaultConsistencyLevel: isProduction ? 'Session' : 'Eventual'
     }
     locations: [
       {
         locationName: location
         failoverPriority: 0
-        isZoneRedundant: true
+        isZoneRedundant: zoneRedundant
       }
     ]
-    enableAutomaticFailover: true
+    enableAutomaticFailover: enableAutomaticFailover
     enableMultipleWriteLocations: false
-    publicNetworkAccess: 'Disabled'
+    // Dev uses public access to avoid private endpoint cost (~$7/mo each)
+    publicNetworkAccess: isProduction ? 'Disabled' : 'Enabled'
     networkAclBypass: 'AzureServices'
     disableKeyBasedMetadataWriteAccess: true
+    backupPolicy: backupPolicy
   }
 }
 
@@ -33,7 +58,11 @@ resource fraudDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-02-15-
   name: 'frauddb'
   properties: {
     resource: { id: 'frauddb' }
-    options: { autoscaleSettings: { maxThroughput: 4000 } }
+    options: isProduction ? {
+      autoscaleSettings: { maxThroughput: 4000 }
+    } : {
+      throughput: 400
+    }
   }
 }
 
@@ -49,7 +78,7 @@ resource transactionsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabas
         includedPaths: [{ path: '/customer_id/?' }, { path: '/timestamp/?' }, { path: '/status/?' }]
         excludedPaths: [{ path: '/*' }]
       }
-      defaultTtl: 7776000  // 90 days
+      defaultTtl: isProduction ? 7776000 : 604800  // Prod: 90d | Dev: 7d
     }
   }
 }
@@ -73,16 +102,22 @@ resource decisionsContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/
     resource: {
       id: 'decisions'
       partitionKey: { paths: ['/transaction_id'], kind: 'Hash' }
-      defaultTtl: 31536000  // 1 year audit retention
+      defaultTtl: isProduction ? 31536000 : 604800  // Prod: 1yr | Dev: 7d
     }
   }
 }
 
-// Store connection string in Key Vault
 resource cosmosSecretPrimary 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/cosmos-connection-string'
   properties: {
     value: cosmosAccount.listConnectionStrings().connectionStrings[0].connectionString
+    attributes: {
+      enabled: true
+      // Secret expiry: 90 days in dev to prompt rotation, 1yr in prod
+      exp: isProduction
+        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+    }
   }
 }
 

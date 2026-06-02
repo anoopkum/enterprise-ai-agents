@@ -3,21 +3,31 @@ param hubName string
 param location string
 param tags object
 param keyVaultName string
+param isProduction bool
+
+// Dev/Staging: Basic tier, 1 TU, 1 partition, no capture → ~$11/mo
+// Prod:        Standard tier, 2 TU, 8 partitions, auto-inflate, capture → ~$280/mo
+var skuName = isProduction ? 'Standard' : 'Basic'
+var skuTier = isProduction ? 'Standard' : 'Basic'
+var throughputUnits = isProduction ? 2 : 1
+var partitionCount = isProduction ? 8 : 2
+var messageRetentionDays = isProduction ? 7 : 1  // Basic max is 1 day
 
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = {
   name: namespaceName
   location: location
   tags: tags
   sku: {
-    name: 'Standard'
-    tier: 'Standard'
-    capacity: 2
+    name: skuName
+    tier: skuTier
+    capacity: throughputUnits
   }
   properties: {
-    isAutoInflateEnabled: true
-    maximumThroughputUnits: 10
+    isAutoInflateEnabled: isProduction        // Auto-inflate only on Standard
+    maximumThroughputUnits: isProduction ? 10 : 0
     kafkaEnabled: false
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: isProduction ? 'Disabled' : 'Enabled'
+    zoneRedundant: isProduction
   }
 }
 
@@ -25,9 +35,10 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
   parent: eventHubNamespace
   name: hubName
   properties: {
-    messageRetentionInDays: 7
-    partitionCount: 8
-    captureDescription: {
+    messageRetentionInDays: messageRetentionDays
+    partitionCount: partitionCount
+    // Capture is a Standard-only feature — skip in dev to avoid storage cost
+    captureDescription: isProduction ? {
       enabled: true
       encoding: 'Avro'
       intervalInSeconds: 300
@@ -35,10 +46,12 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
       destination: {
         name: 'EventHubArchive.AzureBlockBlob'
         properties: {
-          // Storage account configured separately
           archiveNameFormat: '{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}'
         }
       }
+    } : {
+      enabled: false
+      encoding: 'Avro'
     }
   }
 }
@@ -59,6 +72,12 @@ resource ehConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/eventhub-connection-string'
   properties: {
     value: listenAuthRule.listKeys().primaryConnectionString
+    attributes: {
+      enabled: true
+      exp: isProduction
+        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+    }
   }
 }
 
