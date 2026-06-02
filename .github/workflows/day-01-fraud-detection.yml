@@ -64,7 +64,7 @@ jobs:
 
       - name: detect-secrets scan
         run: |
-          detect-secrets scan --baseline /dev/null > .secrets.baseline || true
+          detect-secrets scan src/ > .secrets.baseline
           python -c "
           import json, sys
           data = json.load(open('.secrets.baseline'))
@@ -73,7 +73,7 @@ jobs:
               print('WARNING: Potential secrets detected:')
               for f, findings in results.items():
                   for finding in findings:
-                      print(f'  {f}:{finding[\"line_number\"]} — {finding[\"type\"]}')
+                      print(f'  {f}:{finding[\"line_number\"]} type={finding[\"type\"]}')
               sys.exit(1)
           print('No secrets detected.')
           "
