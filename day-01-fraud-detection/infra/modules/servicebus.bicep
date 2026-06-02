@@ -3,6 +3,7 @@ param location string
 param tags object
 param keyVaultName string
 param isProduction bool
+param utcNowValue string = utcNow()
 
 // Dev/Staging: Standard tier (~$52/mo) — no VNet isolation, no geo-DR
 // Prod:        Premium tier (~$330/mo) — private endpoints, 99.9% SLA, geo-DR
@@ -58,8 +59,8 @@ resource sbConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
     attributes: {
       enabled: true
       exp: isProduction
-        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
-        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+        ? dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P90D'))
     }
   }
 }

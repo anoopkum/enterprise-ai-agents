@@ -3,11 +3,10 @@ param location string
 param tags object
 param keyVaultName string
 param isProduction bool
+param utcNowValue string = utcNow()
 
 // Dev/Staging: 400 RU manual, no zone-redundancy, no failover → ~$60/mo
 // Prod:        4000 RU autoscale, zone-redundant, auto-failover → ~$1,100/mo
-var throughput = isProduction ? null : 400   // null = use autoscaleSettings
-var maxThroughput = isProduction ? 4000 : null
 var zoneRedundant = isProduction
 var enableAutomaticFailover = isProduction
 var backupPolicy = isProduction ? {
@@ -115,8 +114,8 @@ resource cosmosSecretPrimary 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
       enabled: true
       // Secret expiry: 90 days in dev to prompt rotation, 1yr in prod
       exp: isProduction
-        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
-        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+        ? dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P90D'))
     }
   }
 }

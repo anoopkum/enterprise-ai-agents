@@ -3,6 +3,7 @@ param location string
 param tags object
 param keyVaultName string
 param isProduction bool
+param utcNowValue string = utcNow()
 
 // Dev: 7-day retention, daily cap 0.5GB → near-zero cost
 // Prod: 90-day retention, no cap → ~$45/mo
@@ -50,8 +51,8 @@ resource appiConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
     attributes: {
       enabled: true
       exp: isProduction
-        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
-        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+        ? dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P90D'))
     }
   }
 }

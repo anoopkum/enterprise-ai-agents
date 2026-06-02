@@ -4,6 +4,7 @@ param location string
 param tags object
 param keyVaultName string
 param isProduction bool
+param utcNowValue string = utcNow()
 
 // Dev/Staging: Basic tier, 1 TU, 1 partition, no capture → ~$11/mo
 // Prod:        Standard tier, 2 TU, 8 partitions, auto-inflate, capture → ~$280/mo
@@ -75,8 +76,8 @@ resource ehConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
     attributes: {
       enabled: true
       exp: isProduction
-        ? dateTimeToEpoch(dateTimeAdd(utcNow(), 'P1Y'))
-        : dateTimeToEpoch(dateTimeAdd(utcNow(), 'P90D'))
+        ? dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P1Y'))
+        : dateTimeToEpoch(dateTimeAdd(utcNowValue, 'P90D'))
     }
   }
 }

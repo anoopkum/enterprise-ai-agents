@@ -15,7 +15,9 @@ env:
   PYTHON_VERSION: "3.11"
   WORKING_DIR: day-01-fraud-detection
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/enterprise-ai-agents/fraud-detection
-  AZURE_RESOURCE_GROUP: rg-fraud-agent-prod
+  AZURE_RG_DEV: rg-fraud-agent-dev
+  AZURE_RG_STAGING: rg-fraud-agent-staging
+  AZURE_RG_PROD: rg-fraud-agent-prod
   AZURE_LOCATION: eastus2
 
 permissions:
@@ -251,35 +253,44 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
   # ── 7. Deploy to Staging ───────────────────────────────────────────────────
-  # PREREQUISITE: Configure OIDC federated identity in Azure AD for this repo:
-  #   az ad app federated-credential create --id <CLIENT_ID> --parameters
-  #     '{"name":"staging","issuer":"https://token.actions.githubusercontent.com",
-  #       "subject":"repo:anoopkum/enterprise-ai-agents:environment:staging",
-  #       "audiences":["api://AzureADTokenExchange"]}'
-  # Then set AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_ADMIN_OBJECT_ID
-  # as GitHub repository secrets.
+  # Auth: Service principal secret (AZURE_CLIENT_SECRET repo secret).
+  # TODO: Migrate to OIDC federated identity for production use — remove
+  #       AZURE_CLIENT_SECRET and add federated credentials for each environment subject.
   deploy-staging:
     name: Deploy — Staging
     runs-on: ubuntu-latest
     needs: build-and-scan
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    outputs:
+      url: ${{ steps.get-url.outputs.url }}
     environment:
       name: staging
       url: ${{ steps.get-url.outputs.url }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure login (OIDC)
+      - name: Azure login (service principal)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Create resource group if missing
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RG_STAGING }} \
+            --location ${{ env.AZURE_LOCATION }} \
+            --tags project=fraud-agent environment=staging managedBy=bicep
 
       - name: Deploy Bicep to staging
         uses: azure/arm-deploy@v2
         with:
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}-staging
+          resourceGroupName: ${{ env.AZURE_RG_STAGING }}
           template: ${{ env.WORKING_DIR }}/infra/main.bicep
           parameters: >
             environment=staging
@@ -291,7 +302,7 @@ jobs:
         run: |
           URL=$(az containerapp show \
             --name ca-fraud-agent-staging \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+            --resource-group ${{ env.AZURE_RG_STAGING }} \
             --query properties.configuration.ingress.fqdn -o tsv)
           echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
 
@@ -331,17 +342,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure login (OIDC)
+      - name: Azure login (service principal)
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Create resource group if missing
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RG_PROD }} \
+            --location ${{ env.AZURE_LOCATION }} \
+            --tags project=fraud-agent environment=prod managedBy=bicep
 
       - name: Deploy Bicep to production
         uses: azure/arm-deploy@v2
         with:
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          resourceGroupName: ${{ env.AZURE_RG_PROD }}
           template: ${{ env.WORKING_DIR }}/infra/main.bicep
           parameters: >
             environment=prod
@@ -353,7 +375,7 @@ jobs:
         run: |
           URL=$(az containerapp show \
             --name ca-fraud-agent-prod \
-            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --resource-group ${{ env.AZURE_RG_PROD }} \
             --query properties.configuration.ingress.fqdn -o tsv)
           echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
 
