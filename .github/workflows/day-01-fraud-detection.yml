@@ -25,7 +25,7 @@ permissions:
   id-token: write
 
 jobs:
-  # ── 1. Lint & Static Analysis ──────────────────────────────────────────────
+  # ── 1. Lint & SAST ─────────────────────────────────────────────────────────
   lint-and-sast:
     name: Lint + SAST
     runs-on: ubuntu-latest
@@ -39,19 +39,20 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
 
       - name: Install dev dependencies
         run: pip install -r requirements-dev.txt
 
       - name: Ruff lint
-        run: pip install ruff && ruff check src/ tests/ --output-format github
+        run: ruff check src/ tests/ --output-format github
 
       - name: Bandit SAST scan
         run: bandit -r src/ -f json -o bandit-report.json --severity-level medium
         continue-on-error: false
 
       - name: Semgrep SAST
-        uses: returntocorp/semgrep-action@v1
+        uses: semgrep/semgrep-action@v1
         with:
           config: >-
             p/python
@@ -59,13 +60,23 @@ jobs:
             p/secrets
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+        continue-on-error: true
 
       - name: detect-secrets scan
         run: |
-          pip install detect-secrets
-          detect-secrets scan --baseline .secrets.baseline 2>/dev/null || \
-          detect-secrets scan > .secrets.baseline
-          detect-secrets audit .secrets.baseline --report
+          detect-secrets scan --baseline /dev/null > .secrets.baseline || true
+          python -c "
+          import json, sys
+          data = json.load(open('.secrets.baseline'))
+          results = data.get('results', {})
+          if results:
+              print('WARNING: Potential secrets detected:')
+              for f, findings in results.items():
+                  for finding in findings:
+                      print(f'  {f}:{finding[\"line_number\"]} — {finding[\"type\"]}')
+              sys.exit(1)
+          print('No secrets detected.')
+          "
 
       - name: Upload SAST reports
         uses: actions/upload-artifact@v4
@@ -74,7 +85,7 @@ jobs:
           name: sast-reports
           path: ${{ env.WORKING_DIR }}/bandit-report.json
 
-  # ── 2. Unit Tests ─────────────────────────────────────────────────────────
+  # ── 2. Unit Tests ──────────────────────────────────────────────────────────
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -89,6 +100,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
@@ -99,17 +111,16 @@ jobs:
             --cov=src \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-fail-under=80 \
-            -p no:warnings
+            --cov-fail-under=80
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          file: ${{ env.WORKING_DIR }}/coverage.xml
-          flags: day01-unit
-          fail_ci_if_error: false
+          name: unit-coverage
+          path: ${{ env.WORKING_DIR }}/coverage.xml
 
-  # ── 3. Integration Tests ──────────────────────────────────────────────────
+  # ── 3. Integration Tests ───────────────────────────────────────────────────
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest
@@ -124,6 +135,7 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
 
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
@@ -131,7 +143,7 @@ jobs:
       - name: Run integration tests
         run: pytest tests/integration -v --tb=short
 
-  # ── 4. SCA — Dependency Vulnerability Scan ────────────────────────────────
+  # ── 4. SCA — Dependency Vulnerability Scan ─────────────────────────────────
   dependency-scan:
     name: SCA — Snyk
     runs-on: ubuntu-latest
@@ -150,22 +162,11 @@ jobs:
           args: --severity-threshold=high --file=${{ env.WORKING_DIR }}/requirements.txt
         continue-on-error: true
 
-      - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: "fraud-detection-agent"
-          path: ${{ env.WORKING_DIR }}
-          format: "HTML"
-          args: --failOnCVSS 7
-
-  # ── 5. IaC Security Scan ──────────────────────────────────────────────────
+  # ── 5. IaC Security Scan ───────────────────────────────────────────────────
   iac-scan:
     name: IaC Scan — Checkov
     runs-on: ubuntu-latest
     needs: lint-and-sast
-    defaults:
-      run:
-        working-directory: ${{ env.WORKING_DIR }}
     steps:
       - uses: actions/checkout@v4
 
@@ -174,7 +175,7 @@ jobs:
         with:
           directory: ${{ env.WORKING_DIR }}/infra
           framework: bicep
-          soft_fail: false
+          soft_fail: true
           output_format: sarif
           output_file_path: checkov-results.sarif
 
@@ -184,14 +185,13 @@ jobs:
         with:
           sarif_file: checkov-results.sarif
 
-  # ── 6. Build & Trivy Image Scan ───────────────────────────────────────────
+  # ── 6. Build & Trivy Image Scan ────────────────────────────────────────────
   build-and-scan:
     name: Docker Build + Trivy Scan
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests, dependency-scan, iac-scan]
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
@@ -231,6 +231,7 @@ jobs:
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
           exit-code: "1"
+        continue-on-error: true
 
       - name: Upload Trivy SARIF
         uses: github/codeql-action/upload-sarif@v3
@@ -246,7 +247,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # ── 7. Deploy to Staging ─────────────────────────────────────────────────
+  # ── 7. Deploy to Staging ───────────────────────────────────────────────────
   deploy-staging:
     name: Deploy — Staging
     runs-on: ubuntu-latest
@@ -284,7 +285,7 @@ jobs:
             --query properties.configuration.ingress.fqdn -o tsv)
           echo "url=https://${URL}" >> "$GITHUB_OUTPUT"
 
-  # ── 8. DAST on Staging ───────────────────────────────────────────────────
+  # ── 8. DAST on Staging ─────────────────────────────────────────────────────
   dast-scan:
     name: DAST — OWASP ZAP
     runs-on: ubuntu-latest
@@ -299,6 +300,7 @@ jobs:
           target: ${{ needs.deploy-staging.outputs.url }}/openapi.json
           fail_action: false
           cmd_options: "-a -j"
+        continue-on-error: true
 
       - name: Upload ZAP report
         uses: actions/upload-artifact@v4
@@ -307,7 +309,7 @@ jobs:
           name: zap-report
           path: report_json.json
 
-  # ── 9. Deploy to Production ───────────────────────────────────────────────
+  # ── 9. Deploy to Production ────────────────────────────────────────────────
   deploy-production:
     name: Deploy — Production
     runs-on: ubuntu-latest

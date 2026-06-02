@@ -9,12 +9,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from azure.ai.projects import AIProjectClient
-from azure.ai.projects.models import (
-    AgentThread,
-    MessageRole,
-    RunStatus,
+from azure.ai.agents.models import (
     FunctionTool,
     ToolSet,
+    MessageRole,
+    RunStatus,
 )
 from azure.identity import DefaultAzureCredential
 
@@ -63,24 +62,21 @@ class FraudDetectionAgent:
         self._toolset = self._build_toolset()
 
     def _build_toolset(self) -> ToolSet:
-        functions = FunctionTool(
-            functions=[
-                get_transaction_history,
-                check_velocity,
-                assess_geolocation_risk,
-                check_blacklist,
-            ]
-        )
         toolset = ToolSet()
-        toolset.add(functions)
+        toolset.add(FunctionTool(functions={
+            get_transaction_history,
+            check_velocity,
+            assess_geolocation_risk,
+            check_blacklist,
+        }))
         return toolset
 
     @property
     def client(self) -> AIProjectClient:
         if self._client is None:
-            self._client = AIProjectClient.from_connection_string(
+            self._client = AIProjectClient(
+                endpoint=os.environ["AI_FOUNDRY_ENDPOINT"],
                 credential=DefaultAzureCredential(),
-                conn_str=os.environ["AI_FOUNDRY_CONNECTION_STRING"],
             )
         return self._client
 
@@ -101,33 +97,42 @@ class FraudDetectionAgent:
     def analyze_transaction(self, transaction: dict[str, Any]) -> dict[str, Any]:
         agent_id = self._ensure_agent()
 
-        thread: AgentThread = self.client.agents.create_thread()
+        # Create thread
+        thread = self.client.agents.threads.create()
 
-        self.client.agents.create_message(
+        # Post the transaction as a user message
+        self.client.agents.messages.create(
             thread_id=thread.id,
             role=MessageRole.USER,
             content=json.dumps(transaction),
         )
 
-        run = self.client.agents.create_and_process_run(
+        # Run the agent — blocks until terminal state, auto-executes tool calls
+        run = self.client.agents.runs.create_and_process(
             thread_id=thread.id,
             agent_id=agent_id,
             toolset=self._toolset,
         )
 
         if run.status != RunStatus.COMPLETED:
-            logger.error("Agent run failed: %s — %s", run.status, run.last_error)
-            return self._fallback_decision(transaction, str(run.last_error))
+            error_detail = run.last_error.message if run.last_error else str(run.status)
+            logger.error("Agent run failed: %s — %s", run.status, error_detail)
+            return self._fallback_decision(transaction, error_detail)
 
-        messages = self.client.agents.list_messages(thread_id=thread.id)
-        last_message = next(
-            (m for m in messages.data if m.role == MessageRole.ASSISTANT), None
+        # Retrieve the last assistant message
+        last_message = self.client.agents.messages.get_last_message_by_role(
+            thread_id=thread.id,
+            role=MessageRole.AGENT,
         )
 
         if not last_message:
             return self._fallback_decision(transaction, "No agent response")
 
-        raw = last_message.content[0].text.value if last_message.content else ""
+        raw = ""
+        for block in last_message.content:
+            if hasattr(block, "text") and hasattr(block.text, "value"):
+                raw = block.text.value
+                break
 
         try:
             start = raw.find("{")
@@ -135,7 +140,7 @@ class FraudDetectionAgent:
             decision = json.loads(raw[start:end])
         except (json.JSONDecodeError, ValueError):
             logger.warning("Could not parse agent JSON, raw: %s", raw[:200])
-            decision = self._fallback_decision(transaction, "JSON parse error")
+            return self._fallback_decision(transaction, "JSON parse error")
 
         decision["analyzed_at"] = datetime.now(timezone.utc).isoformat()
         decision["agent_run_id"] = run.id

@@ -1,6 +1,6 @@
-"""Unit tests for FraudDetectionAgent — mocks AI Foundry calls."""
+"""Unit tests for FraudDetectionAgent — mocks AI Foundry SDK calls."""
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, PropertyMock
 import pytest
 
 from src.agent.fraud_agent import FraudDetectionAgent
@@ -31,51 +31,69 @@ MOCK_DECISION = {
     "risk_level": "CRITICAL",
     "decision": "BLOCK",
     "signals": ["AMOUNT_SPIKE", "HIGH_RISK_COUNTRY"],
-    "reasoning": "Transaction score critically high due to amount spike and high-risk signals.",
+    "reasoning": "Transaction score critically high.",
     "recommended_action": "Block card and notify customer.",
 }
 
 
 @pytest.fixture
 def mock_env(monkeypatch):
-    monkeypatch.setenv("AI_FOUNDRY_CONNECTION_STRING", "test-conn-string")
+    monkeypatch.setenv("AI_FOUNDRY_ENDPOINT", "https://test.api.azureml.ms")
     monkeypatch.setenv("COSMOS_DB_ENDPOINT", "https://test.documents.azure.com:443/")
     monkeypatch.setenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4o")
 
 
-def build_mock_client(decision_json: str) -> MagicMock:
-    mock_client = MagicMock()
+def _make_mock_message(decision_json: str) -> MagicMock:
+    """Build a mock ThreadMessage with text content."""
+    msg = MagicMock()
+    block = MagicMock()
+    block.text.value = decision_json
+    msg.content = [block]
+    return msg
+
+
+def _build_mock_project_client(decision_json: str) -> MagicMock:
+    """Build a mock AIProjectClient with all sub-operations wired up."""
+    from azure.ai.agents.models import RunStatus
+
+    client = MagicMock()
+
+    # agents sub-client
+    agents = MagicMock()
+    client.agents = agents
+
+    # create_agent
     mock_agent = MagicMock()
     mock_agent.id = "agent-123"
-    mock_client.agents.create_agent.return_value = mock_agent
+    agents.create_agent.return_value = mock_agent
 
+    # threads.create
     mock_thread = MagicMock()
     mock_thread.id = "thread-456"
-    mock_client.agents.create_thread.return_value = mock_thread
+    agents.threads.create.return_value = mock_thread
 
+    # messages.create (fire and forget)
+    agents.messages.create.return_value = MagicMock()
+
+    # runs.create_and_process — status must equal the real RunStatus enum
     mock_run = MagicMock()
-    mock_run.status = "completed"
+    mock_run.status = RunStatus.COMPLETED
     mock_run.id = "run-789"
-    mock_client.agents.create_and_process_run.return_value = mock_run
+    mock_run.last_error = None
+    agents.runs.create_and_process.return_value = mock_run
 
-    mock_msg = MagicMock()
-    mock_msg.role = "assistant"
-    mock_content = MagicMock()
-    mock_content.text.value = decision_json
-    mock_msg.content = [mock_content]
+    # messages.get_last_message_by_role
+    agents.messages.get_last_message_by_role.return_value = _make_mock_message(decision_json)
 
-    mock_messages = MagicMock()
-    mock_messages.data = [mock_msg]
-    mock_client.agents.list_messages.return_value = mock_messages
-
-    return mock_client
+    return client
 
 
 class TestFraudDetectionAgent:
 
-    @patch("src.agent.fraud_agent.AIProjectClient.from_connection_string")
-    def test_analyze_transaction_block_decision(self, mock_foundry, mock_env):
-        mock_foundry.return_value = build_mock_client(json.dumps(MOCK_DECISION))
+    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.DefaultAzureCredential")
+    def test_analyze_transaction_block_decision(self, mock_cred, mock_client_cls, mock_env):
+        mock_client_cls.return_value = _build_mock_project_client(json.dumps(MOCK_DECISION))
         agent = FraudDetectionAgent()
         result = agent.analyze_transaction(SAMPLE_TRANSACTION)
 
@@ -86,42 +104,46 @@ class TestFraudDetectionAgent:
         assert "analyzed_at" in result
         assert "agent_run_id" in result
 
-    @patch("src.agent.fraud_agent.AIProjectClient.from_connection_string")
-    def test_analyze_transaction_approve_decision(self, mock_foundry, mock_env):
-        approve_decision = {**MOCK_DECISION, "fraud_score": 10, "risk_level": "LOW", "decision": "APPROVE"}
-        mock_foundry.return_value = build_mock_client(json.dumps(approve_decision))
+    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.DefaultAzureCredential")
+    def test_analyze_transaction_approve_decision(self, mock_cred, mock_client_cls, mock_env):
+        approve = {**MOCK_DECISION, "fraud_score": 10, "risk_level": "LOW", "decision": "APPROVE"}
+        mock_client_cls.return_value = _build_mock_project_client(json.dumps(approve))
         agent = FraudDetectionAgent()
         result = agent.analyze_transaction(SAMPLE_TRANSACTION)
 
         assert result["decision"] == "APPROVE"
         assert result["fraud_score"] == 10
 
-    @patch("src.agent.fraud_agent.AIProjectClient.from_connection_string")
-    def test_fallback_on_run_failure(self, mock_foundry, mock_env):
-        mock_client = MagicMock()
-        mock_agent = MagicMock()
-        mock_agent.id = "agent-123"
-        mock_client.agents.create_agent.return_value = mock_agent
-        mock_client.agents.create_thread.return_value = MagicMock(id="thread-x")
+    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.DefaultAzureCredential")
+    def test_fallback_on_run_failure(self, mock_cred, mock_client_cls, mock_env):
+        client = _build_mock_project_client("{}")
         mock_run = MagicMock()
-        mock_run.status = "failed"
-        mock_run.last_error = "timeout"
+        mock_run.status.value = "failed"
         mock_run.id = "run-fail"
-        mock_client.agents.create_and_process_run.return_value = mock_run
-        mock_foundry.return_value = mock_client
+        mock_run.last_error.message = "timeout"
+        client.agents.runs.create_and_process.return_value = mock_run
 
+        # Make status != COMPLETED comparison work
+        from azure.ai.agents.models import RunStatus
+        mock_run.status = "failed"  # raw string won't equal RunStatus.COMPLETED
+
+        mock_client_cls.return_value = client
         agent = FraudDetectionAgent()
         result = agent.analyze_transaction(SAMPLE_TRANSACTION)
 
         assert result["decision"] == "REVIEW"
         assert "agent_error" in result["signals"]
 
-    @patch("src.agent.fraud_agent.AIProjectClient.from_connection_string")
-    def test_agent_reuses_existing_id(self, mock_foundry, mock_env):
-        mock_foundry.return_value = build_mock_client(json.dumps(MOCK_DECISION))
+    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.DefaultAzureCredential")
+    def test_agent_reuses_existing_id(self, mock_cred, mock_client_cls, mock_env):
+        mock_client_cls.return_value = _build_mock_project_client(json.dumps(MOCK_DECISION))
         agent = FraudDetectionAgent()
         agent.analyze_transaction(SAMPLE_TRANSACTION)
         agent.analyze_transaction(SAMPLE_TRANSACTION)
+        # create_agent only called once — id is cached
         assert agent.client.agents.create_agent.call_count == 1
 
     def test_fallback_decision_structure(self, mock_env):
@@ -132,3 +154,16 @@ class TestFraudDetectionAgent:
         assert fallback["decision"] == "REVIEW"
         assert fallback["fraud_score"] == 50
         assert "analyzed_at" in fallback
+
+    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.DefaultAzureCredential")
+    def test_fallback_when_no_message_returned(self, mock_cred, mock_client_cls, mock_env):
+        client = _build_mock_project_client("{}")
+        client.agents.messages.get_last_message_by_role.return_value = None
+        mock_client_cls.return_value = client
+
+        agent = FraudDetectionAgent()
+        result = agent.analyze_transaction(SAMPLE_TRANSACTION)
+
+        assert result["decision"] == "REVIEW"
+        assert "agent_error" in result["signals"]

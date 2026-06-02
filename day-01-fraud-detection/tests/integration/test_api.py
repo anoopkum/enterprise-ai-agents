@@ -1,8 +1,11 @@
 """Integration tests for the FastAPI fraud detection endpoint."""
-import json
 from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
+
+# Import the app module eagerly so patch() can resolve it
+import src.api.main  # noqa: F401 — side-effect import required for patch target
 
 VALID_PAYLOAD = {
     "transaction_id": "TXN-INT-001",
@@ -43,7 +46,7 @@ def test_client():
         mock_agent_cls.return_value = mock_agent
 
         from src.api.main import app
-        with TestClient(app) as client:
+        with TestClient(app, raise_server_exceptions=True) as client:
             yield client, mock_agent
 
 
@@ -73,8 +76,7 @@ class TestAnalyzeEndpoint:
 
     def test_invalid_payload_returns_422(self, test_client):
         client, _ = test_client
-        bad_payload = {**VALID_PAYLOAD, "amount": -100}
-        response = client.post("/analyze", json=bad_payload)
+        response = client.post("/analyze", json={**VALID_PAYLOAD, "amount": -100})
         assert response.status_code == 422
 
     def test_missing_required_field_returns_422(self, test_client):
