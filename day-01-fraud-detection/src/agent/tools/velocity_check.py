@@ -2,7 +2,7 @@
 import os
 import json
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from azure.cosmos import CosmosClient
 from azure.identity import DefaultAzureCredential
 

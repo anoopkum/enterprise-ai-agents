@@ -1,6 +1,6 @@
 """Unit tests for FraudDetectionAgent — mocks AI Foundry SDK calls."""
 import json
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 import pytest
 
 from src.agent.fraud_agent import FraudDetectionAgent
@@ -125,8 +125,6 @@ class TestFraudDetectionAgent:
         mock_run.last_error.message = "timeout"
         client.agents.runs.create_and_process.return_value = mock_run
 
-        # Make status != COMPLETED comparison work
-        from azure.ai.agents.models import RunStatus
         mock_run.status = "failed"  # raw string won't equal RunStatus.COMPLETED
 
         mock_client_cls.return_value = client

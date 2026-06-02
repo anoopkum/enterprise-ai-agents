@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from azure.monitor.opentelemetry import configure_azure_monitor
 
