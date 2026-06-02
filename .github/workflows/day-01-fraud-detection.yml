@@ -251,6 +251,13 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
   # ── 7. Deploy to Staging ───────────────────────────────────────────────────
+  # PREREQUISITE: Configure OIDC federated identity in Azure AD for this repo:
+  #   az ad app federated-credential create --id <CLIENT_ID> --parameters
+  #     '{"name":"staging","issuer":"https://token.actions.githubusercontent.com",
+  #       "subject":"repo:anoopkum/enterprise-ai-agents:environment:staging",
+  #       "audiences":["api://AzureADTokenExchange"]}'
+  # Then set AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_ADMIN_OBJECT_ID
+  # as GitHub repository secrets.
   deploy-staging:
     name: Deploy — Staging
     runs-on: ubuntu-latest
