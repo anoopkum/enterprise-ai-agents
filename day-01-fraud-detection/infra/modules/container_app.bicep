@@ -5,6 +5,7 @@ param tags object
 param keyVaultName string
 param cosmosEndpoint string
 param eventHubNamespace string
+@secure()
 param aiFoundryConnectionString string
 param environmentName string
 param isProduction bool

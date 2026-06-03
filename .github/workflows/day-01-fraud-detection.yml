@@ -296,6 +296,7 @@ jobs:
             environment=staging
             location=${{ env.AZURE_LOCATION }}
             adminObjectId=${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          failOnStdErr: false
 
       - name: Get staging URL
         id: get-url
@@ -369,6 +370,7 @@ jobs:
             environment=prod
             location=${{ env.AZURE_LOCATION }}
             adminObjectId=${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          failOnStdErr: false
 
       - name: Get production URL
         id: get-url
