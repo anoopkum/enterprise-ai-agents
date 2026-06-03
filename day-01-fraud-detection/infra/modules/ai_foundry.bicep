@@ -8,7 +8,8 @@ param isProduction bool
 // Dev: gpt-4o-mini 10K TPM, public network → minimal cost (pay-per-token only)
 // Prod: gpt-4o 50K TPM, private endpoints → higher capacity + isolation
 var modelName = isProduction ? 'gpt-4o' : 'gpt-4o-mini'
-var modelVersion = isProduction ? '2024-08-06' : '2024-07-18'
+// gpt-4o 2024-08-06 is deprecated; use 2024-11-20 (latest stable as of 2026)
+var modelVersion = isProduction ? '2024-11-20' : '2024-07-18'
 var tpmCapacity = isProduction ? 50 : 10
 var networkAccess = isProduction ? 'Disabled' : 'Enabled'
 

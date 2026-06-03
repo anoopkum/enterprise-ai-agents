@@ -6,13 +6,31 @@ param keyVaultName string
 param isProduction bool
 param utcNowValue string = utcNow()
 
-// Dev/Staging: Basic tier, 1 TU, 1 partition, no capture → ~$11/mo
+// Dev/Staging: Basic tier, 1 TU, 2 partitions, no capture → ~$11/mo
 // Prod:        Standard tier, 2 TU, 8 partitions, auto-inflate, capture → ~$280/mo
 var skuName = isProduction ? 'Standard' : 'Basic'
 var skuTier = isProduction ? 'Standard' : 'Basic'
 var throughputUnits = isProduction ? 2 : 1
 var partitionCount = isProduction ? 8 : 2
 var messageRetentionDays = isProduction ? 7 : 1  // Basic max is 1 day
+
+// Capture storage account (prod only) — Basic tier does not support capture
+resource captureStorage 'Microsoft.Storage/storageAccounts@2023-05-01' = if (isProduction) {
+  name: 'st${replace(namespaceName, '-', '')}cap'
+  location: location
+  tags: tags
+  sku: { name: 'Standard_LRS' }
+  kind: 'StorageV2'
+  properties: {
+    minimumTlsVersion: 'TLS1_2'
+    allowBlobPublicAccess: false
+  }
+}
+
+resource captureContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01' = if (isProduction) {
+  name: '${isProduction ? captureStorage.name : 'placeholder'}/default/eventhub-capture'
+  properties: { publicAccess: 'None' }
+}
 
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = {
   name: namespaceName
@@ -24,7 +42,7 @@ resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = {
     capacity: throughputUnits
   }
   properties: {
-    isAutoInflateEnabled: isProduction        // Auto-inflate only on Standard
+    isAutoInflateEnabled: isProduction
     maximumThroughputUnits: isProduction ? 10 : 0
     kafkaEnabled: false
     publicNetworkAccess: isProduction ? 'Disabled' : 'Enabled'
@@ -47,6 +65,8 @@ resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
       destination: {
         name: 'EventHubArchive.AzureBlockBlob'
         properties: {
+          storageAccountResourceId: captureStorage.id
+          blobContainer: 'eventhub-capture'
           archiveNameFormat: '{Namespace}/{EventHub}/{PartitionId}/{Year}/{Month}/{Day}/{Hour}/{Minute}/{Second}'
         }
       }
