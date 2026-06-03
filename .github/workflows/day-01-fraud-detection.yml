@@ -332,11 +332,12 @@ jobs:
           path: report_json.json
 
   # ── 9. Deploy to Production ────────────────────────────────────────────────
+  # Disabled until prod infra is fully validated (zone redundancy needs VNet/subnet)
   deploy-production:
     name: Deploy — Production
     runs-on: ubuntu-latest
     needs: dast-scan
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: false
     environment:
       name: production
       url: ${{ steps.get-url.outputs.url }}
