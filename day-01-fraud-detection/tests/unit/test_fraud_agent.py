@@ -53,44 +53,43 @@ def _make_mock_message(decision_json: str) -> MagicMock:
 
 
 def _build_mock_project_client(decision_json: str) -> MagicMock:
-    """Build a mock AIProjectClient with all sub-operations wired up."""
+    """Build a mock AgentsClient with all sub-operations wired up.
+
+    AgentsClient exposes create_agent/threads/messages/runs directly (no .agents sub-namespace).
+    """
     from azure.ai.agents.models import RunStatus
 
     client = MagicMock()
 
-    # agents sub-client
-    agents = MagicMock()
-    client.agents = agents
-
-    # create_agent
+    # create_agent — directly on the client
     mock_agent = MagicMock()
     mock_agent.id = "agent-123"
-    agents.create_agent.return_value = mock_agent
+    client.create_agent.return_value = mock_agent
 
     # threads.create
     mock_thread = MagicMock()
     mock_thread.id = "thread-456"
-    agents.threads.create.return_value = mock_thread
+    client.threads.create.return_value = mock_thread
 
     # messages.create (fire and forget)
-    agents.messages.create.return_value = MagicMock()
+    client.messages.create.return_value = MagicMock()
 
     # runs.create_and_process — status must equal the real RunStatus enum
     mock_run = MagicMock()
     mock_run.status = RunStatus.COMPLETED
     mock_run.id = "run-789"
     mock_run.last_error = None
-    agents.runs.create_and_process.return_value = mock_run
+    client.runs.create_and_process.return_value = mock_run
 
     # messages.get_last_message_by_role
-    agents.messages.get_last_message_by_role.return_value = _make_mock_message(decision_json)
+    client.messages.get_last_message_by_role.return_value = _make_mock_message(decision_json)
 
     return client
 
 
 class TestFraudDetectionAgent:
 
-    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.AgentsClient")
     @patch("src.agent.fraud_agent.DefaultAzureCredential")
     def test_analyze_transaction_block_decision(self, mock_cred, mock_client_cls, mock_env):
         mock_client_cls.return_value = _build_mock_project_client(json.dumps(MOCK_DECISION))
@@ -104,7 +103,7 @@ class TestFraudDetectionAgent:
         assert "analyzed_at" in result
         assert "agent_run_id" in result
 
-    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.AgentsClient")
     @patch("src.agent.fraud_agent.DefaultAzureCredential")
     def test_analyze_transaction_approve_decision(self, mock_cred, mock_client_cls, mock_env):
         approve = {**MOCK_DECISION, "fraud_score": 10, "risk_level": "LOW", "decision": "APPROVE"}
@@ -115,7 +114,7 @@ class TestFraudDetectionAgent:
         assert result["decision"] == "APPROVE"
         assert result["fraud_score"] == 10
 
-    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.AgentsClient")
     @patch("src.agent.fraud_agent.DefaultAzureCredential")
     def test_fallback_on_run_failure(self, mock_cred, mock_client_cls, mock_env):
         client = _build_mock_project_client("{}")
@@ -123,7 +122,7 @@ class TestFraudDetectionAgent:
         mock_run.status.value = "failed"
         mock_run.id = "run-fail"
         mock_run.last_error.message = "timeout"
-        client.agents.runs.create_and_process.return_value = mock_run
+        client.runs.create_and_process.return_value = mock_run
 
         mock_run.status = "failed"  # raw string won't equal RunStatus.COMPLETED
 
@@ -134,7 +133,7 @@ class TestFraudDetectionAgent:
         assert result["decision"] == "REVIEW"
         assert "agent_error" in result["signals"]
 
-    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.AgentsClient")
     @patch("src.agent.fraud_agent.DefaultAzureCredential")
     def test_agent_reuses_existing_id(self, mock_cred, mock_client_cls, mock_env):
         mock_client_cls.return_value = _build_mock_project_client(json.dumps(MOCK_DECISION))
@@ -142,7 +141,7 @@ class TestFraudDetectionAgent:
         agent.analyze_transaction(SAMPLE_TRANSACTION)
         agent.analyze_transaction(SAMPLE_TRANSACTION)
         # create_agent only called once — id is cached
-        assert agent.client.agents.create_agent.call_count == 1
+        assert agent.client.create_agent.call_count == 1
 
     def test_fallback_decision_structure(self, mock_env):
         agent = FraudDetectionAgent()
@@ -153,11 +152,11 @@ class TestFraudDetectionAgent:
         assert fallback["fraud_score"] == 50
         assert "analyzed_at" in fallback
 
-    @patch("src.agent.fraud_agent.AIProjectClient")
+    @patch("src.agent.fraud_agent.AgentsClient")
     @patch("src.agent.fraud_agent.DefaultAzureCredential")
     def test_fallback_when_no_message_returned(self, mock_cred, mock_client_cls, mock_env):
         client = _build_mock_project_client("{}")
-        client.agents.messages.get_last_message_by_role.return_value = None
+        client.messages.get_last_message_by_role.return_value = None
         mock_client_cls.return_value = client
 
         agent = FraudDetectionAgent()

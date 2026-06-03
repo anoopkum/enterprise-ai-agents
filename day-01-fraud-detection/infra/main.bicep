@@ -98,6 +98,7 @@ module containerApp 'modules/container_app.bicep' = {
     keyVaultName: keyVault.outputs.name
     cosmosEndpoint: cosmosDb.outputs.endpoint
     eventHubNamespace: eventHub.outputs.namespaceName
+    aiFoundryEndpoint: aiFoundry.outputs.aiFoundryEndpoint
     aiFoundryConnectionString: aiFoundry.outputs.connectionString
     environmentName: environment
     isProduction: isProduction

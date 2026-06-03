@@ -5,6 +5,7 @@ param tags object
 param keyVaultName string
 param cosmosEndpoint string
 param eventHubNamespace string
+param aiFoundryEndpoint string  // Azure OpenAI endpoint URL for AgentsClient
 @secure()
 param aiFoundryConnectionString string
 param environmentName string
@@ -103,6 +104,7 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'COSMOS_DB_ENDPOINT', value: cosmosEndpoint }
             { name: 'COSMOS_DB_NAME', value: 'frauddb' }
             { name: 'AZURE_OPENAI_DEPLOYMENT', value: isProduction ? 'gpt-4o' : 'gpt-4o-mini' }
+            { name: 'AI_FOUNDRY_ENDPOINT', value: aiFoundryEndpoint }
             { name: 'AI_FOUNDRY_CONNECTION_STRING', secretRef: 'ai-foundry-conn' }
             { name: 'ENVIRONMENT', value: environmentName }
             { name: 'EVENT_HUB_NAMESPACE', value: eventHubNamespace }

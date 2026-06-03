@@ -86,5 +86,7 @@ output hubId string = aiHub.id
 output projectId string = aiProject.id
 output modelDeploymentName string = modelName
 output openAiEndpoint string = openAiAccount.properties.endpoint
+// AIProjectClient endpoint: the hub's discoveryUrl base (e.g. https://eastus2.api.azureml.ms)
+output aiFoundryEndpoint string = replace(aiHub.properties.discoveryUrl, '/discovery', '')
 // Connection string for AI Foundry SDK
 output connectionString string = '${aiHub.properties.discoveryUrl};${subscription().subscriptionId};${resourceGroup().name};${aiProject.name}'

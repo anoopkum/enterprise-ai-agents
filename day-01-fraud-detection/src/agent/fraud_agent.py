@@ -8,7 +8,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from azure.ai.projects import AIProjectClient
+from azure.ai.agents import AgentsClient
 from azure.ai.agents.models import (
     FunctionTool,
     ToolSet,
@@ -72,9 +72,11 @@ class FraudDetectionAgent:
         return toolset
 
     @property
-    def client(self) -> AIProjectClient:
+    def client(self) -> AgentsClient:
         if self._client is None:
-            self._client = AIProjectClient(
+            # AgentsClient connects directly to the Azure OpenAI endpoint
+            # (no AI Foundry Hub routing — avoids ResourceNotFoundError on Hub connections)
+            self._client = AgentsClient(
                 endpoint=os.environ["AI_FOUNDRY_ENDPOINT"],
                 credential=DefaultAzureCredential(),
             )
@@ -84,7 +86,7 @@ class FraudDetectionAgent:
         if self._agent_id:
             return self._agent_id
 
-        agent = self.client.agents.create_agent(
+        agent = self.client.create_agent(
             model=os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-4o"),
             name="fraud-detection-agent",
             instructions=FRAUD_AGENT_INSTRUCTIONS,
@@ -98,17 +100,17 @@ class FraudDetectionAgent:
         agent_id = self._ensure_agent()
 
         # Create thread
-        thread = self.client.agents.threads.create()
+        thread = self.client.threads.create()
 
         # Post the transaction as a user message
-        self.client.agents.messages.create(
+        self.client.messages.create(
             thread_id=thread.id,
             role=MessageRole.USER,
             content=json.dumps(transaction),
         )
 
         # Run the agent — blocks until terminal state, auto-executes tool calls
-        run = self.client.agents.runs.create_and_process(
+        run = self.client.runs.create_and_process(
             thread_id=thread.id,
             agent_id=agent_id,
             toolset=self._toolset,
@@ -120,7 +122,7 @@ class FraudDetectionAgent:
             return self._fallback_decision(transaction, error_detail)
 
         # Retrieve the last assistant message
-        last_message = self.client.agents.messages.get_last_message_by_role(
+        last_message = self.client.messages.get_last_message_by_role(
             thread_id=thread.id,
             role=MessageRole.AGENT,
         )
