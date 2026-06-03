@@ -16,7 +16,6 @@ Run (headless, 30s ramp, 60s sustained):
 """
 
 import random
-import time
 import uuid
 from datetime import datetime, timezone
 

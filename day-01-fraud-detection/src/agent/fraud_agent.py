@@ -57,7 +57,7 @@ Always err on the side of customer safety. Be explainable and concise.
 
 class FraudDetectionAgent:
     def __init__(self):
-        self._client: AIProjectClient | None = None
+        self._client: AgentsClient | None = None
         self._agent_id: str | None = None
         self._toolset = self._build_toolset()
 
