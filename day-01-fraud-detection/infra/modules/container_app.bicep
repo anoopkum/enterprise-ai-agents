@@ -18,7 +18,7 @@ var cpuCores = isProduction ? '0.5' : '0.25'
 var memoryGi = isProduction ? '1Gi' : '0.5Gi'
 var minReplicas = isProduction ? 2 : (environmentName == 'staging' ? 1 : 0)
 var maxReplicas = isProduction ? 20 : (environmentName == 'staging' ? 5 : 3)
-var logRetentionDays = isProduction ? 30 : 7
+var logRetentionDays = isProduction ? 30 : 30  // PerGB2018 minimum is 30 days
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'law-${envName}'

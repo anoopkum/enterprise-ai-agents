@@ -7,7 +7,7 @@ param utcNowValue string = utcNow()
 
 // Dev: 7-day retention, daily cap 0.5GB → near-zero cost
 // Prod: 90-day retention, no cap → ~$45/mo
-var retentionDays = isProduction ? 90 : 7
+var retentionDays = isProduction ? 90 : 30  // PerGB2018 minimum retention is 30 days
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: 'law-${name}'

@@ -7,9 +7,9 @@ param utcNowValue string = utcNow()
 
 // Dev/Staging: Standard tier (~$52/mo) — no VNet isolation, no geo-DR
 // Prod:        Premium tier (~$330/mo) — private endpoints, 99.9% SLA, geo-DR
+// NOTE: capacity is only valid for Premium tier; omit (null) for Standard to avoid BadRequest
 var skuName = isProduction ? 'Premium' : 'Standard'
 var skuTier = isProduction ? 'Premium' : 'Standard'
-var skuCapacity = isProduction ? 1 : 0  // 0 = not applicable for Standard
 
 resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2022-10-01-preview' = {
   name: namespaceName
@@ -18,7 +18,7 @@ resource serviceBusNamespace 'Microsoft.ServiceBus/namespaces@2022-10-01-preview
   sku: {
     name: skuName
     tier: skuTier
-    capacity: isProduction ? skuCapacity : null
+    capacity: isProduction ? 1 : null
   }
   properties: {
     publicNetworkAccess: isProduction ? 'Disabled' : 'Enabled'
