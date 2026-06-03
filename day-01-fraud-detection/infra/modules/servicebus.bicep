@@ -52,10 +52,16 @@ resource reviewQueue 'Microsoft.ServiceBus/namespaces/queues@2022-10-01-preview'
   }
 }
 
+// listKeys() is on authorization rules, not the namespace itself
+resource rootManageRule 'Microsoft.ServiceBus/namespaces/authorizationRules@2022-10-01-preview' existing = {
+  parent: serviceBusNamespace
+  name: 'RootManageSharedAccessKey'
+}
+
 resource sbConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: '${keyVaultName}/servicebus-connection-string'
   properties: {
-    value: serviceBusNamespace.listKeys().primaryConnectionString
+    value: rootManageRule.listKeys().primaryConnectionString
     attributes: {
       enabled: true
       exp: isProduction
