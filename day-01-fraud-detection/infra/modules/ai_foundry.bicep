@@ -107,6 +107,7 @@ output projectId string = aiProject.id
 output modelDeploymentName string = modelName
 output openAiEndpoint string = openAiAccount.properties.endpoint
 // AgentsClient endpoint: the project's agentsEndpointUri (full path including workspace)
-output aiFoundryEndpoint string = aiProject.properties.agentsEndpointUri
+// agentsEndpointUri is not exposed in the 2024-04-01 Bicep schema — construct it from known format
+output aiFoundryEndpoint string = 'https://${location}.api.azureml.ms/agents/v1.0/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.MachineLearningServices/workspaces/${aiProject.name}'
 // Connection string for AI Foundry SDK
 output connectionString string = '${aiHub.properties.discoveryUrl};${subscription().subscriptionId};${resourceGroup().name};${aiProject.name}'
