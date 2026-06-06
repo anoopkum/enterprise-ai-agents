@@ -47,8 +47,9 @@ def check_blacklist(
         for id_type, id_value in identifiers:
             if not id_value:
                 continue
+            # 'value' is a reserved word in Cosmos DB SQL — alias it as 'identifier'
             results = list(container.query_items(
-                query="SELECT c.type, c.reason, c.added_date, c.severity FROM c WHERE c.type=@type AND c.value=@val",
+                query="SELECT c.type, c.reason, c.added_date, c.severity, c[\"value\"] AS identifier FROM c WHERE c.type=@type AND c[\"value\"]=@val",
                 parameters=[
                     {"name": "@type", "value": id_type},
                     {"name": "@val", "value": id_value},
