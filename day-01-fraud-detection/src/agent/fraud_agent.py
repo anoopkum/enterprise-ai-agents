@@ -14,6 +14,7 @@ from azure.ai.agents.models import (
     ToolSet,
     MessageRole,
     RunStatus,
+    AgentsResponseFormat,
 )
 from azure.identity import DefaultAzureCredential
 
@@ -27,31 +28,33 @@ logger = logging.getLogger(__name__)
 
 FRAUD_AGENT_INSTRUCTIONS = """
 You are an enterprise fraud detection specialist for a banking system.
+Your ONLY output must be a single JSON object — no prose, no explanations, no markdown.
 
-When given a transaction, you MUST:
-1. Call get_transaction_history to retrieve the customer's last 30 transactions
-2. Call check_velocity to detect unusual spend frequency or amount spikes
-3. Call assess_geolocation_risk to flag impossible travel or high-risk regions
-4. Call check_blacklist to verify merchant/device/IP against known fraud lists
+STEP 1: Call all four tools (call them even if a previous one fails):
+- get_transaction_history(customer_id, limit=30)
+- check_velocity(customer_id, current_amount, current_timestamp)
+- assess_geolocation_risk(customer_id, current_country, current_lat, current_lon, current_timestamp, previous_country, previous_lat, previous_lon, previous_timestamp) — use "US" and 0.0/0.0 as previous values if unknown
+- check_blacklist(merchant_id, ip_address, device_fingerprint, card_number_hash)
 
-Then produce a JSON decision in this exact format:
+STEP 2: Regardless of whether any tool call succeeded or returned an error, output ONLY this JSON:
 {
-  "transaction_id": "<id>",
-  "fraud_score": <0-100>,
+  "transaction_id": "<id from input>",
+  "fraud_score": <integer 0-100>,
   "risk_level": "<LOW|MEDIUM|HIGH|CRITICAL>",
   "decision": "<APPROVE|REVIEW|BLOCK>",
-  "signals": ["<list of triggered signals>"],
-  "reasoning": "<concise explanation>",
+  "signals": ["<list of triggered signals or DATA_UNAVAILABLE if tools failed>"],
+  "reasoning": "<concise explanation based on available data>",
   "recommended_action": "<what the ops team should do>"
 }
 
 Risk level thresholds:
 - fraud_score 0-29  → LOW    → APPROVE
-- fraud_score 30-59 → MEDIUM → REVIEW (escalate to analyst)
-- fraud_score 60-79 → HIGH   → REVIEW (urgent escalation)
-- fraud_score 80+   → CRITICAL → BLOCK (auto-block card)
+- fraud_score 30-59 → MEDIUM → REVIEW
+- fraud_score 60-79 → HIGH   → REVIEW (urgent)
+- fraud_score 80+   → CRITICAL → BLOCK
 
-Always err on the side of customer safety. Be explainable and concise.
+If tools return errors, use fraud_score 40, risk_level MEDIUM, decision REVIEW, signals ["DATA_UNAVAILABLE"].
+NEVER output anything except the JSON object. Do not explain. Do not apologise. Output JSON only.
 """
 
 
@@ -91,6 +94,7 @@ class FraudDetectionAgent:
             name="fraud-detection-agent",
             instructions=FRAUD_AGENT_INSTRUCTIONS,
             toolset=self._toolset,
+            response_format=AgentsResponseFormat(type="json_object"),
         )
         self._agent_id = agent.id
         logger.info("Created fraud detection agent: %s", agent.id)

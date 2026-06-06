@@ -6,7 +6,7 @@ param keyVaultId string
 param isProduction bool
 
 // Dev: gpt-4o-mini 10K TPM, public network → minimal cost (pay-per-token only)
-// Prod: gpt-4o 50K TPM, private endpoints → higher capacity + isolation
+// Staging/Prod: gpt-4o 50K TPM, private endpoints → higher capacity + isolation
 var modelName = isProduction ? 'gpt-4o' : 'gpt-4o-mini'
 // gpt-4o 2024-08-06 is deprecated; use 2024-11-20 (latest stable as of 2026)
 var modelVersion = isProduction ? '2024-11-20' : '2024-07-18'
@@ -27,7 +27,7 @@ resource openAiAccount 'Microsoft.CognitiveServices/accounts@2024-04-01-preview'
   }
 }
 
-// Model deployment on the OpenAI account
+// Primary model deployment — gpt-4o-mini in dev, gpt-4o in staging/prod
 resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = {
   parent: openAiAccount
   name: modelName
@@ -42,6 +42,26 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-
   sku: {
     name: 'GlobalStandard'
     capacity: tpmCapacity
+  }
+}
+
+// Secondary gpt-4o deployment for staging (enables showcase with full reasoning quality)
+// Only deployed when !isProduction so dev keeps minimal cost; staging gets both models
+resource gpt4oStagingDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-04-01-preview' = if (!isProduction) {
+  parent: openAiAccount
+  name: 'gpt-4o'
+  dependsOn: [modelDeployment]
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'gpt-4o'
+      version: '2024-11-20'
+    }
+    versionUpgradeOption: 'NoAutoUpgrade'
+  }
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 30
   }
 }
 
@@ -86,7 +106,7 @@ output hubId string = aiHub.id
 output projectId string = aiProject.id
 output modelDeploymentName string = modelName
 output openAiEndpoint string = openAiAccount.properties.endpoint
-// AIProjectClient endpoint: the hub's discoveryUrl base (e.g. https://eastus2.api.azureml.ms)
-output aiFoundryEndpoint string = replace(aiHub.properties.discoveryUrl, '/discovery', '')
+// AgentsClient endpoint: the project's agentsEndpointUri (full path including workspace)
+output aiFoundryEndpoint string = aiProject.properties.agentsEndpointUri
 // Connection string for AI Foundry SDK
 output connectionString string = '${aiHub.properties.discoveryUrl};${subscription().subscriptionId};${resourceGroup().name};${aiProject.name}'
