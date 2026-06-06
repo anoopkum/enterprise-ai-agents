@@ -103,7 +103,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'COSMOS_DB_ENDPOINT', value: cosmosEndpoint }
             { name: 'COSMOS_DB_NAME', value: 'frauddb' }
-            { name: 'AZURE_OPENAI_DEPLOYMENT', value: isProduction ? 'gpt-4o' : 'gpt-4o-mini' }
+            // dev: gpt-4o-mini (cheap); staging + prod: gpt-4o (full quality for testing/showcase)
+            { name: 'AZURE_OPENAI_DEPLOYMENT', value: (isProduction || environmentName == 'staging') ? 'gpt-4o' : 'gpt-4o-mini' }
             { name: 'AI_FOUNDRY_ENDPOINT', value: aiFoundryEndpoint }
             { name: 'AI_FOUNDRY_CONNECTION_STRING', secretRef: 'ai-foundry-conn' }
             { name: 'ENVIRONMENT', value: environmentName }
