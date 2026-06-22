@@ -1,5 +1,4 @@
 """Integration tests for the FastAPI application — uses mocked orchestrator."""
-import json
 import pytest
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone
@@ -62,10 +61,18 @@ def client():
         "mlflow": "ok",
     }
 
-    with patch("src.api.main._orchestrator", mock_orchestrator):
-        from src.api.main import app
-        with TestClient(app, raise_server_exceptions=False) as c:
-            yield c, mock_orchestrator
+    import src.api.main as api_module
+    from src.api.main import app
+
+    # Inject mock before lifespan runs so the guard `if _orchestrator is None` skips init
+    api_module._orchestrator = mock_orchestrator
+    api_module._decisions_store.clear()
+
+    with TestClient(app, raise_server_exceptions=False) as c:
+        yield c, mock_orchestrator
+
+    api_module._orchestrator = None
+    api_module._decisions_store.clear()
 
 
 @pytest.mark.integration

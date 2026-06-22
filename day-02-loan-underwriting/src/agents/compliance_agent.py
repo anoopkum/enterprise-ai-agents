@@ -18,7 +18,7 @@ TOP_K_RULES = 5
 
 class ComplianceAgent:
     def __init__(self) -> None:
-        self._chroma_client: chromadb.Client | None = None
+        self._chroma_client: chromadb.ClientAPI | None = None
         self._kb_collection: chromadb.Collection | None = None
 
     @property
@@ -99,7 +99,7 @@ class ComplianceAgent:
             f"debt-to-income {dti:.0%} consumer credit"
         )
 
-    def _parse_results(self, results: dict) -> list[dict]:
+    def _parse_results(self, results: Any) -> list[dict]:
         rules = []
         docs = results.get("documents", [[]])[0]
         metas = results.get("metadatas", [[]])[0]

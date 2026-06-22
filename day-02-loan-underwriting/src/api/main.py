@@ -5,8 +5,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Optional
-
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,12 +25,13 @@ _decisions_store: dict[str, dict] = {}
 async def lifespan(app: FastAPI):
     global _orchestrator
 
-    if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
-        from azure.monitor.opentelemetry import configure_azure_monitor
-        configure_azure_monitor()
+    if _orchestrator is None:  # skip if already injected (e.g. in tests)
+        if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+            from azure.monitor.opentelemetry import configure_azure_monitor
+            configure_azure_monitor()
+        _orchestrator = LoanIntelligenceOrchestrator()
+        logger.info("Loan Intelligence Orchestrator initialized")
 
-    _orchestrator = LoanIntelligenceOrchestrator()
-    logger.info("Loan Intelligence Orchestrator initialized")
     yield
     logger.info("Shutting down Loan Intelligence Orchestrator")
 

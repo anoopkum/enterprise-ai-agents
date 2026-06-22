@@ -5,7 +5,6 @@ returns probability + risk band, and tracks each scoring run with MLflow.
 import json
 import logging
 import os
-from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -69,6 +68,7 @@ class RiskScoringAgent:
             mlflow.log_param("model_path", os.environ.get("MODEL_PATH", "models/credit_risk_model.pkl"))
 
             model = self.model  # triggers lazy load, sets self._feature_names
+            assert self._feature_names is not None
             feature_vector = build_feature_vector(application, self._feature_names)
             probability = float(model.predict_proba([feature_vector])[0][1])
             risk_band = _band(probability)

@@ -1,23 +1,31 @@
-resource "azurerm_log_analytics_workspace" "this" {
+resource "azurerm_log_analytics_workspace" "law" {
   name                = "${var.env_name}-logs"
   resource_group_name = var.resource_group_name
   location            = var.location
   sku                 = "PerGB2018"
   retention_in_days   = var.is_production ? 90 : 30
   tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
-resource "azurerm_container_app_environment" "this" {
+resource "azurerm_container_app_environment" "env" {
   name                       = var.env_name
   resource_group_name        = var.resource_group_name
   location                   = var.location
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
-resource "azurerm_container_app" "this" {
+resource "azurerm_container_app" "app" {
   name                         = var.app_name
-  container_app_environment_id = azurerm_container_app_environment.this.id
+  container_app_environment_id = azurerm_container_app_environment.env.id
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
   tags                         = var.tags
@@ -88,5 +96,9 @@ resource "azurerm_container_app" "this" {
   secret {
     name  = "appinsights-conn-str"
     value = var.app_insights_conn_str
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 }

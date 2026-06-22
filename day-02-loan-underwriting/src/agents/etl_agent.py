@@ -2,7 +2,6 @@
 ETL Agent — ingests loan applications, validates fields, enriches with derived features,
 and stores normalised records in ChromaDB for downstream agents.
 """
-import json
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ETLAgent:
     def __init__(self) -> None:
-        self._chroma_client: chromadb.Client | None = None
+        self._chroma_client: chromadb.ClientAPI | None = None
         self._collection: chromadb.Collection | None = None
 
     @property

@@ -1,7 +1,5 @@
 """Unit tests for loan intelligence agents — no external dependencies required."""
-import json
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

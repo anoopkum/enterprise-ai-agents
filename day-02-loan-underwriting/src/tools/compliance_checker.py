@@ -9,8 +9,9 @@ logger = logging.getLogger(__name__)
 
 def load_regulatory_kb(kb_path: str | None = None) -> list[dict]:
     """Load the regulatory knowledge base from disk."""
-    path = kb_path or os.environ.get("REGULATORY_KB_PATH", "data/regulatory_kb.json")
-    with open(path) as f:
+    resolved = kb_path or os.environ.get("REGULATORY_KB_PATH", "data/regulatory_kb.json")
+    assert resolved is not None
+    with open(resolved) as f:
         return json.load(f)
 
 
