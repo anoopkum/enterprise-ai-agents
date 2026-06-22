@@ -21,8 +21,8 @@ permissions:
 
 
 env:
-  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
   IMAGE_NAME: loan-underwriting
+  RESOURCE_GROUP: rg-loan-underwriting-dev
 
 jobs:
   # ─── Train model ──────────────────────────────────────────────────────────
@@ -99,14 +99,20 @@ jobs:
               "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
             }
 
-      - name: Login to ACR
-        run: az acr login --name ${{ env.ACR_LOGIN_SERVER }}
+      - name: Resolve ACR login server
+        id: acr
+        run: |
+          LOGIN_SERVER=$(az acr list \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --query "[0].loginServer" --output tsv)
+          echo "login_server=$LOGIN_SERVER" >> "$GITHUB_OUTPUT"
+          az acr login --name "$LOGIN_SERVER"
 
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,prefix=sha-
             type=raw,value=latest
@@ -119,19 +125,20 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       - name: Snyk container scan
         uses: snyk/actions/docker@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          image: ${{ steps.acr.outputs.login_server }}/${{ env.IMAGE_NAME }}:latest
           args: --severity-threshold=high --sarif-file-output=snyk-container.sarif
         continue-on-error: true
 
       - name: Upload container scan results
+        if: hashFiles('snyk-container.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-container.sarif
@@ -189,7 +196,7 @@ jobs:
           echo "## Deploy dev complete" >> "$GITHUB_STEP_SUMMARY"
           echo "| | |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Image | \`${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | \`${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Digest | \`${{ needs.build.outputs.image_digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| SHA | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
 
