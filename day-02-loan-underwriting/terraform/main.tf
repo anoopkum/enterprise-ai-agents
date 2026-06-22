@@ -79,8 +79,8 @@ module "openai" {
 
 module "foundry" {
   source              = "./modules/foundry"
-  hub_name            = "aihub-${local.prefix}"
-  project_name        = "proj-${local.prefix}"
+  hub_name            = "aihub-lu-${var.environment}"
+  project_name        = "proj-lu-${var.environment}"
   resource_group_name = azurerm_resource_group.main.name
   location            = var.location
   tags                = local.tags
