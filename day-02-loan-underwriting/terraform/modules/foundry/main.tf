@@ -15,12 +15,12 @@ resource "azurerm_application_insights" "hub" {
   tags                = var.tags
 }
 
+# AzureRM 3.x: Hub/Project kind requires AzureRM 4.x — using standard workspace
 resource "azurerm_machine_learning_workspace" "hub" {
   name                          = var.hub_name
   resource_group_name           = var.resource_group_name
   location                      = var.location
   tags                          = var.tags
-  kind                          = "Hub"
   key_vault_id                  = var.key_vault_id
   storage_account_id            = azurerm_storage_account.hub.id
   application_insights_id       = azurerm_application_insights.hub.id
@@ -32,25 +32,8 @@ resource "azurerm_machine_learning_workspace" "hub" {
   }
 }
 
-resource "azurerm_machine_learning_workspace" "project" {
-  name                    = var.project_name
-  resource_group_name     = var.resource_group_name
-  location                = var.location
-  tags                    = var.tags
-  kind                    = "Project"
-  sku_name                = "Basic"
-  hub_id                  = azurerm_machine_learning_workspace.hub.id
-  storage_account_id      = azurerm_storage_account.hub.id
-  application_insights_id = azurerm_application_insights.hub.id
-  key_vault_id            = var.key_vault_id
-
-  identity {
-    type = "SystemAssigned"
-  }
-}
-
-resource "azurerm_role_assignment" "project_openai" {
+resource "azurerm_role_assignment" "workspace_openai" {
   scope                = var.openai_id
   role_definition_name = "Cognitive Services OpenAI User"
-  principal_id         = azurerm_machine_learning_workspace.project.identity[0].principal_id
+  principal_id         = azurerm_machine_learning_workspace.hub.identity[0].principal_id
 }

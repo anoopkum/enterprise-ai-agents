@@ -23,8 +23,8 @@ resource "azurerm_cognitive_deployment" "gpt4o" {
     version = "2024-11-20"
   }
 
-  sku {
-    name     = "GlobalStandard"
+  scale {
+    type     = "Standard"
     capacity = var.is_production ? 100 : 30
   }
 }
