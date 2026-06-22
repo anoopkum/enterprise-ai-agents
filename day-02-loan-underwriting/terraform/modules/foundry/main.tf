@@ -33,8 +33,9 @@ resource "azurerm_application_insights" "aml" {
   tags                       = var.tags
 
   lifecycle {
-    # workspace_id is auto-set by Azure Machine Learning and cannot be removed once assigned
-    ignore_changes = [tags, workspace_id]
+    # AML auto-links this App Insights and rejects any update that omits workspace_id.
+    # Ignore all mutable attributes — this resource is effectively managed by AML.
+    ignore_changes = [tags, workspace_id, internet_ingestion_enabled, internet_query_enabled]
   }
 }
 
