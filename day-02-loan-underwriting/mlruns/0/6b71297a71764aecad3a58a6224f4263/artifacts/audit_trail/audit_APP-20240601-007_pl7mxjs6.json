@@ -1,0 +1,77 @@
+{
+  "application_id": "APP-20240601-007",
+  "decision": "APPROVE",
+  "risk_score": 0.010004028913600863,
+  "risk_band": "LOW",
+  "explanation": {
+    "decision": "APPROVE",
+    "plain_english_explanation": "Based on automated assessment, this application has been assessed as LOW risk (probability of default: 1.0%). The primary concerns are: overall credit profile.",
+    "primary_risk_factors": [
+      "Overall risk score 1.0%"
+    ],
+    "mitigating_factors": [],
+    "customer_message": "Thank you for your application. To improve your creditworthiness, consider reducing existing debt balances and ensuring all payments are made on time over the next 6 months.",
+    "analyst_notes": "Fallback decision \u2014 agent unavailable. risk_band=LOW, dti=0.169"
+  },
+  "compliance": {
+    "applicable_rules": [
+      {
+        "rule_id": "BASEL3-LCR-001",
+        "framework": "Basel III",
+        "reference": "Basel III \u2014 LCR and NSFR (CRD IV Art. 87)",
+        "description": "Loan-to-income capital weighting requirements",
+        "relevance_score": 0.6104
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-002",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.36 G",
+        "description": "Creditworthiness \u2014 debt-to-income guidance",
+        "relevance_score": 0.5648
+      },
+      {
+        "rule_id": "FCA-CONC-7-001",
+        "framework": "FCA",
+        "reference": "CONC 7.3.4 R \u2014 Arrears and default handling",
+        "description": "Firms must treat customers in financial difficulty fairly",
+        "relevance_score": 0.5231
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-001",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.4 R",
+        "description": "Creditworthiness assessment \u2014 affordability",
+        "relevance_score": 0.5177
+      },
+      {
+        "rule_id": "FCA-CD-002",
+        "framework": "FCA Consumer Duty",
+        "reference": "PRIN 2A.4 (Consumer Duty \u2014 Customer Understanding)",
+        "description": "Communications must support informed customer decisions",
+        "relevance_score": 0.4676
+      }
+    ],
+    "compliance_flags": [],
+    "gdpr_article_22_disclosure_required": false,
+    "fca_consumer_duty_met": true,
+    "checked_at": "2026-06-22T16:11:32.743137+00:00"
+  },
+  "shap_values": {
+    "age": 0.000478,
+    "annual_income": 0.002232,
+    "credit_score": -0.119486,
+    "existing_debt": -0.008325,
+    "loan_amount": -0.012698,
+    "loan_term_months": -0.011295,
+    "dti_ratio": -0.118443,
+    "credit_utilisation_rate": -0.06071,
+    "payment_history_score": -0.025646,
+    "missed_payments_count": -0.040452,
+    "late_payments_count": 1.3e-05,
+    "loan_to_income_ratio": -0.042044,
+    "employment_stability_score": -0.024089,
+    "monthly_income": 0.001183,
+    "estimated_monthly_payment": -0.030426
+  },
+  "audited_at": "2026-06-22T16:11:32.781558+00:00"
+}

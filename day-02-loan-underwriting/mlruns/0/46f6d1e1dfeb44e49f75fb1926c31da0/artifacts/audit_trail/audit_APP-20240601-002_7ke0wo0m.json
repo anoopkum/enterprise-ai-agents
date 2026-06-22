@@ -1,0 +1,85 @@
+{
+  "application_id": "APP-20240601-002",
+  "decision": "DECLINE",
+  "risk_score": 0.7973728157005902,
+  "risk_band": "CRITICAL",
+  "explanation": {
+    "decision": "DECLINE",
+    "plain_english_explanation": "Based on automated assessment, this application has been assessed as CRITICAL risk (probability of default: 79.7%). The primary concerns are: Credit score of 580 is below minimum threshold of 600; Payment history score of 0/100 indicates recent missed payments.",
+    "primary_risk_factors": [
+      "Credit score of 580 is below minimum threshold of 600",
+      "Payment history score of 0/100 indicates recent missed payments"
+    ],
+    "mitigating_factors": [],
+    "customer_message": "Thank you for your application. To improve your creditworthiness, consider reducing existing debt balances and ensuring all payments are made on time over the next 6 months.",
+    "analyst_notes": "Fallback decision \u2014 agent unavailable. risk_band=CRITICAL, dti=0.316"
+  },
+  "compliance": {
+    "applicable_rules": [
+      {
+        "rule_id": "BASEL3-LCR-001",
+        "framework": "Basel III",
+        "reference": "Basel III \u2014 LCR and NSFR (CRD IV Art. 87)",
+        "description": "Loan-to-income capital weighting requirements",
+        "relevance_score": 0.6191
+      },
+      {
+        "rule_id": "FCA-CONC-7-001",
+        "framework": "FCA",
+        "reference": "CONC 7.3.4 R \u2014 Arrears and default handling",
+        "description": "Firms must treat customers in financial difficulty fairly",
+        "relevance_score": 0.5751
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-002",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.36 G",
+        "description": "Creditworthiness \u2014 debt-to-income guidance",
+        "relevance_score": 0.5525
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-001",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.4 R",
+        "description": "Creditworthiness assessment \u2014 affordability",
+        "relevance_score": 0.4993
+      },
+      {
+        "rule_id": "ICO-MLG-001",
+        "framework": "ICO",
+        "reference": "ICO Guidance on AI and Data Protection (2023)",
+        "description": "Explainability requirements for AI-driven credit decisions",
+        "relevance_score": 0.4209
+      }
+    ],
+    "compliance_flags": [
+      {
+        "rule_ref": "GDPR Art. 22",
+        "severity": "HIGH",
+        "description": "Automated credit decision \u2014 applicant has right to request human review.",
+        "required_action": "Include GDPR Art. 22 disclosure in customer communication."
+      }
+    ],
+    "gdpr_article_22_disclosure_required": true,
+    "fca_consumer_duty_met": true,
+    "checked_at": "2026-06-22T15:41:23.096159+00:00"
+  },
+  "shap_values": {
+    "age": 0.001329,
+    "annual_income": 0.006068,
+    "credit_score": -0.07596,
+    "existing_debt": 0.004496,
+    "loan_amount": -0.009611,
+    "loan_term_months": -0.014794,
+    "dti_ratio": -0.098056,
+    "credit_utilisation_rate": 0.131627,
+    "payment_history_score": 0.185213,
+    "missed_payments_count": 0.234437,
+    "late_payments_count": -0.00291,
+    "loan_to_income_ratio": -0.027835,
+    "employment_stability_score": -0.014871,
+    "monthly_income": 0.004489,
+    "estimated_monthly_payment": -0.025961
+  },
+  "audited_at": "2026-06-22T15:41:23.135663+00:00"
+}

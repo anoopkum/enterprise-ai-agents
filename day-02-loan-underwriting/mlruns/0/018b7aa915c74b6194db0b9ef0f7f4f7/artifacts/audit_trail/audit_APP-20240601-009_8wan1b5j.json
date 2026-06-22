@@ -1,0 +1,86 @@
+{
+  "application_id": "APP-20240601-009",
+  "decision": "DECLINE",
+  "risk_score": 0.9549024240442816,
+  "risk_band": "CRITICAL",
+  "explanation": {
+    "decision": "DECLINE",
+    "plain_english_explanation": "Based on automated assessment, this application has been assessed as CRITICAL risk (probability of default: 95.5%). The primary concerns are: Debt-to-income ratio of 51% exceeds 45% threshold; Credit score of 490 is below minimum threshold of 600; Payment history score of 0/100 indicates recent missed payments.",
+    "primary_risk_factors": [
+      "Debt-to-income ratio of 51% exceeds 45% threshold",
+      "Credit score of 490 is below minimum threshold of 600",
+      "Payment history score of 0/100 indicates recent missed payments"
+    ],
+    "mitigating_factors": [],
+    "customer_message": "Thank you for your application. To improve your creditworthiness, consider reducing existing debt balances and ensuring all payments are made on time over the next 6 months.",
+    "analyst_notes": "Fallback decision \u2014 agent unavailable. risk_band=CRITICAL, dti=0.506"
+  },
+  "compliance": {
+    "applicable_rules": [
+      {
+        "rule_id": "BASEL3-LCR-001",
+        "framework": "Basel III",
+        "reference": "Basel III \u2014 LCR and NSFR (CRD IV Art. 87)",
+        "description": "Loan-to-income capital weighting requirements",
+        "relevance_score": 0.6219
+      },
+      {
+        "rule_id": "FCA-CONC-7-001",
+        "framework": "FCA",
+        "reference": "CONC 7.3.4 R \u2014 Arrears and default handling",
+        "description": "Firms must treat customers in financial difficulty fairly",
+        "relevance_score": 0.5707
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-002",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.36 G",
+        "description": "Creditworthiness \u2014 debt-to-income guidance",
+        "relevance_score": 0.5548
+      },
+      {
+        "rule_id": "FCA-CONC-5.2-001",
+        "framework": "FCA",
+        "reference": "CONC 5.2A.4 R",
+        "description": "Creditworthiness assessment \u2014 affordability",
+        "relevance_score": 0.4924
+      },
+      {
+        "rule_id": "FCA-CD-002",
+        "framework": "FCA Consumer Duty",
+        "reference": "PRIN 2A.4 (Consumer Duty \u2014 Customer Understanding)",
+        "description": "Communications must support informed customer decisions",
+        "relevance_score": 0.423
+      }
+    ],
+    "compliance_flags": [
+      {
+        "rule_ref": "GDPR Art. 22",
+        "severity": "HIGH",
+        "description": "Automated credit decision \u2014 applicant has right to request human review.",
+        "required_action": "Include GDPR Art. 22 disclosure in customer communication."
+      }
+    ],
+    "gdpr_article_22_disclosure_required": true,
+    "fca_consumer_duty_met": true,
+    "checked_at": "2026-06-22T16:11:33.446553+00:00"
+  },
+  "shap_values": {
+    "age": 0.001221,
+    "annual_income": 0.002779,
+    "credit_score": 0.154432,
+    "existing_debt": 0.001476,
+    "loan_amount": -0.012622,
+    "loan_term_months": -0.005062,
+    "dti_ratio": 0.039078,
+    "credit_utilisation_rate": 0.082213,
+    "payment_history_score": 0.073152,
+    "missed_payments_count": 0.107102,
+    "late_payments_count": -0.00192,
+    "loan_to_income_ratio": -0.028404,
+    "employment_stability_score": 0.061316,
+    "monthly_income": 0.002728,
+    "estimated_monthly_payment": -0.022297
+  },
+  "audited_at": "2026-06-22T16:11:33.487884+00:00"
+}
