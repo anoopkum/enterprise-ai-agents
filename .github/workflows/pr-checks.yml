@@ -69,19 +69,20 @@ jobs:
         with:
           terraform_version: "1.9.x"
 
-      - name: Azure login (OIDC)
+      - name: Azure login
         uses: azure/login@v2
         with:
           client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret:   ${{ secrets.AZURE_CLIENT_SECRET }}
           tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform init
         env:
           ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:        "true"
         run: terraform init
 
       - name: Terraform fmt check
@@ -94,9 +95,9 @@ jobs:
         id: plan
         env:
           ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:      ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:           "true"
           TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
           TF_VAR_container_image: "placeholder/loan-underwriting:pr-${{ github.event.pull_request.number }}"
         run: |

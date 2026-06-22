@@ -21,7 +21,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   bootstrap:
@@ -40,6 +39,7 @@ jobs:
       - uses: azure/login@v2
         with:
           client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret:   ${{ secrets.AZURE_CLIENT_SECRET }}
           tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
@@ -83,24 +83,25 @@ jobs:
       - uses: azure/login@v2
         with:
           client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret:   ${{ secrets.AZURE_CLIENT_SECRET }}
           tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Terraform init
         env:
           ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:        "true"
         run: terraform init
 
       - name: Terraform apply
         if: ${{ github.event.inputs.destroy != 'true' }}
         env:
           ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:      ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:           "true"
           TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
           TF_VAR_container_image: "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
         run: |
@@ -113,9 +114,9 @@ jobs:
         if: ${{ github.event.inputs.destroy == 'true' }}
         env:
           ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:      ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:           "true"
           TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
           TF_VAR_container_image: "placeholder"
         run: |
@@ -129,9 +130,9 @@ jobs:
         id: tf-out
         env:
           ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
           ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_USE_OIDC:        "true"
         run: |
           ACR=$(terraform output -raw acr_login_server)
           URL=$(terraform output -raw container_app_url)
@@ -139,9 +140,6 @@ jobs:
           echo "acr_login_server=$ACR"  >> "$GITHUB_OUTPUT"
           echo "container_app_url=$URL" >> "$GITHUB_OUTPUT"
           echo "key_vault_name=$KV"     >> "$GITHUB_OUTPUT"
-          echo ""
-          echo "### Next step: add ACR_LOGIN_SERVER secret to GitHub"
-          echo "gh secret set ACR_LOGIN_SERVER --body \"$ACR\" --repo anoopkum/enterprise-ai-agents"
 
       - name: Job summary
         if: ${{ github.event.inputs.destroy != 'true' }}
