@@ -12,11 +12,13 @@ resource "azurerm_storage_account" "aml" {
 }
 
 resource "azurerm_application_insights" "aml" {
-  name                = "${var.hub_name}-appi"
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  application_type    = "web"
-  tags                = var.tags
+  name                       = "${var.hub_name}-appi"
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  application_type           = "web"
+  internet_ingestion_enabled = false
+  internet_query_enabled     = false
+  tags                       = var.tags
 
   lifecycle {
     ignore_changes = [tags]

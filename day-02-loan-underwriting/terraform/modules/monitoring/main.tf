@@ -12,13 +12,15 @@ resource "azurerm_log_analytics_workspace" "law" {
 }
 
 resource "azurerm_application_insights" "appi" {
-  name                = var.name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  workspace_id        = azurerm_log_analytics_workspace.law.id
-  application_type    = "web"
-  retention_in_days   = var.is_production ? 90 : 30
-  tags                = var.tags
+  name                       = var.name
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  workspace_id               = azurerm_log_analytics_workspace.law.id
+  application_type           = "web"
+  retention_in_days          = var.is_production ? 90 : 30
+  internet_ingestion_enabled = false
+  internet_query_enabled     = false
+  tags                       = var.tags
 
   lifecycle {
     ignore_changes = [tags]
