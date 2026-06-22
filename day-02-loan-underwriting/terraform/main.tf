@@ -106,11 +106,6 @@ module "monitoring" {
   is_production       = local.is_production
 }
 
-import {
-  to = module.containerapp.azurerm_container_app.app
-  id = "/subscriptions/27320543-d2ea-4fd5-b361-0145cc56934b/resourceGroups/rg-loan-underwriting-dev/providers/Microsoft.App/containerApps/ca-loan-underwriting-dev"
-}
-
 module "containerapp" {
   source                = "./modules/containerapp"
   env_name              = "cae-${local.prefix}"
