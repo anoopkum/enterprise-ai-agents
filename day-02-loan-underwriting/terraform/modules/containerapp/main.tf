@@ -11,11 +11,11 @@ resource "azurerm_log_analytics_workspace" "this" {
   }
 }
 
-resource "azurerm_container_app_environment" "this" {
+resource "azurerm_container_app_environment" "env" {
   name                       = var.env_name
   resource_group_name        = var.resource_group_name
   location                   = var.location
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.law.id
   tags                       = var.tags
 
   lifecycle {
@@ -23,9 +23,9 @@ resource "azurerm_container_app_environment" "this" {
   }
 }
 
-resource "azurerm_container_app" "this" {
+resource "azurerm_container_app" "app" {
   name                         = var.app_name
-  container_app_environment_id = azurerm_container_app_environment.this.id
+  container_app_environment_id = azurerm_container_app_environment.env.id
   resource_group_name          = var.resource_group_name
   revision_mode                = "Single"
   tags                         = var.tags

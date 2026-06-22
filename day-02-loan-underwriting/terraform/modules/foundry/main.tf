@@ -24,14 +24,14 @@ resource "azurerm_application_insights" "hub" {
 }
 
 # AzureRM 3.x: Hub/Project kind requires AzureRM 4.x — using standard workspace
-resource "azurerm_machine_learning_workspace" "hub" {
+resource "azurerm_machine_learning_workspace" "aml" {
   name                          = var.hub_name
   resource_group_name           = var.resource_group_name
   location                      = var.location
   tags                          = var.tags
   key_vault_id                  = var.key_vault_id
-  storage_account_id            = azurerm_storage_account.hub.id
-  application_insights_id       = azurerm_application_insights.hub.id
+  storage_account_id            = azurerm_storage_account.aml.id
+  application_insights_id       = azurerm_application_insights.aml.id
   sku_name                      = "Basic"
   public_network_access_enabled = !var.is_production
 
@@ -47,5 +47,5 @@ resource "azurerm_machine_learning_workspace" "hub" {
 resource "azurerm_role_assignment" "workspace_openai" {
   scope                = var.openai_id
   role_definition_name = "Cognitive Services OpenAI User"
-  principal_id         = azurerm_machine_learning_workspace.hub.identity[0].principal_id
+  principal_id         = azurerm_machine_learning_workspace.aml.identity[0].principal_id
 }

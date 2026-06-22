@@ -19,8 +19,8 @@ resource "azurerm_key_vault" "this" {
   }
 }
 
-resource "azurerm_role_assignment" "admin" {
-  scope                = azurerm_key_vault.this.id
+resource "azurerm_role_assignment" "kv_admin" {
+  scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Administrator"
   principal_id         = var.admin_object_id
 }
