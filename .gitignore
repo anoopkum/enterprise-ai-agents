@@ -42,6 +42,16 @@ checkov-results.sarif
 *.tfstate
 *.tfstate.backup
 
+# ML artifacts — trained binaries reproduced via scripts/train_model.py
+*.pkl
+mlruns/
+
+# Terraform local
+**/.terraform/
+**/.terraform.lock.hcl
+**/plan.txt
+**/tfplan
+
 # Docker
 *.log
 

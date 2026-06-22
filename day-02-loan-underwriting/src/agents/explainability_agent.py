@@ -84,10 +84,31 @@ class ExplainabilityAgent:
     def explain(self, context: dict[str, Any]) -> dict[str, Any]:
         """
         Generate a plain-English explanation of the risk scoring decision.
-        Falls back to a rule-based explanation if the agent is unavailable.
+        Falls back to a rule-based explanation if Azure AI Foundry is unavailable.
         """
-        agent_id = self._ensure_agent()
         application_id = context["application_id"]
+
+        if not os.environ.get("AI_FOUNDRY_ENDPOINT"):
+            logger.info("AI_FOUNDRY_ENDPOINT not set — using rule-based fallback for %s", application_id)
+            explanation = self._rule_based_fallback(context)
+            return {
+                **context,
+                "explanation": explanation,
+                "final_decision": explanation["decision"],
+                "explanation_source": "fallback",
+            }
+
+        try:
+            agent_id = self._ensure_agent()
+        except Exception as exc:
+            logger.warning("Could not initialise Azure agent (%s) — falling back for %s", exc, application_id)
+            explanation = self._rule_based_fallback(context)
+            return {
+                **context,
+                "explanation": explanation,
+                "final_decision": explanation["decision"],
+                "explanation_source": "fallback",
+            }
 
         payload = {
             "application": context["application"],
@@ -111,7 +132,8 @@ class ExplainabilityAgent:
         if run.status != RunStatus.COMPLETED:
             error_detail = run.last_error.message if run.last_error else str(run.status)
             logger.error("Explainability agent run failed for %s: %s", application_id, error_detail)
-            return {**context, "explanation": self._rule_based_fallback(context), "explanation_source": "fallback"}
+            explanation = self._rule_based_fallback(context)
+            return {**context, "explanation": explanation, "final_decision": explanation["decision"], "explanation_source": "fallback"}
 
         last_message = self.client.messages.get_last_message_by_role(
             thread_id=thread.id,

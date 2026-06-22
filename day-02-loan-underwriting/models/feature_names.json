@@ -1,0 +1,17 @@
+[
+  "age",
+  "annual_income",
+  "credit_score",
+  "existing_debt",
+  "loan_amount",
+  "loan_term_months",
+  "dti_ratio",
+  "credit_utilisation_rate",
+  "payment_history_score",
+  "missed_payments_count",
+  "late_payments_count",
+  "loan_to_income_ratio",
+  "employment_stability_score",
+  "monthly_income",
+  "estimated_monthly_payment"
+]

@@ -48,13 +48,17 @@ def compute_shap_values(model, feature_vector: list[float], feature_names: list[
     try:
         import shap
         explainer = shap.TreeExplainer(model)
-        shap_array = explainer.shap_values(np.array([feature_vector]))
+        shap_output = explainer(np.array([feature_vector]))
 
-        # shap_values returns list [class_0, class_1] for classifiers; we want class_1 (default)
-        if isinstance(shap_array, list):
-            values = shap_array[1][0]
+        # shap_output is a shap.Explanation; .values shape is (n_samples, n_features, n_classes)
+        # for binary classifiers — take class 1 (default probability)
+        raw = shap_output.values
+        if raw.ndim == 3:
+            values = raw[0, :, 1]
+        elif raw.ndim == 2:
+            values = raw[0]
         else:
-            values = shap_array[0]
+            values = raw
 
         return {name: round(float(val), 6) for name, val in zip(feature_names, values)}
 

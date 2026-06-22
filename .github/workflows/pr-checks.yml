@@ -1,0 +1,221 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "day-02-loan-underwriting/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  # ─── Python: lint + type check + tests ────────────────────────────────────
+  test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: day-02-loan-underwriting
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check src/ tests/
+
+      - name: Type check (mypy)
+        run: mypy src/ --ignore-missing-imports
+
+      - name: Run tests
+        env:
+          MLFLOW_TRACKING_URI: "sqlite:///mlruns/mlflow.db"
+          MODEL_PATH: "models/credit_risk_model.pkl"
+          FEATURE_NAMES_PATH: "models/feature_names.json"
+          CHROMA_PERSIST_DIR: "/tmp/chroma_test"
+          REGULATORY_KB_PATH: "data/regulatory_kb.json"
+        run: |
+          mkdir -p mlruns
+          python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: day-02-loan-underwriting/coverage.xml
+
+  # ─── Terraform: fmt + validate + plan ─────────────────────────────────────
+  terraform-plan:
+    name: Terraform Plan (dev)
+    runs-on: ubuntu-latest
+    environment: dev
+    defaults:
+      run:
+        working-directory: day-02-loan-underwriting/terraform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        env:
+          ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:        "true"
+        run: terraform init
+
+      - name: Terraform fmt check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        env:
+          ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:           "true"
+          TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          TF_VAR_container_image: "placeholder/loan-underwriting:pr-${{ github.event.pull_request.number }}"
+        run: |
+          terraform plan \
+            -var-file="environments/dev.tfvars" \
+            -no-color 2>&1 | tee plan.txt
+
+      - name: Post plan as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('day-02-loan-underwriting/terraform/plan.txt', 'utf8');
+            const body = plan.length > 65000 ? plan.substring(0, 65000) + '\n\n...truncated' : plan;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Plan — dev\n\`\`\`hcl\n${body}\n\`\`\``
+            });
+
+  # ─── Snyk: SCA (pip deps) + IaC (Terraform) ───────────────────────────────
+  snyk:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: day-02-loan-underwriting
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Snyk — Python SCA
+        uses: snyk/actions/python-3.10@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --sarif-file-output=snyk-sca.sarif day-02-loan-underwriting
+        continue-on-error: true
+
+      - name: Snyk — Terraform IaC
+        uses: snyk/actions/iac@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --sarif-file-output=snyk-iac.sarif day-02-loan-underwriting/terraform
+        continue-on-error: true
+
+      - name: Upload Snyk SCA to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: day-02-loan-underwriting/snyk-sca.sarif
+          category: snyk-sca
+
+      - name: Upload Snyk IaC to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: day-02-loan-underwriting/snyk-iac.sarif
+          category: snyk-iac
+
+  # ─── SonarQube: SAST + quality gate ───────────────────────────────────────
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-xml
+          path: day-02-loan-underwriting/
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST }}
+        with:
+          projectBaseDir: day-02-loan-underwriting
+
+      - name: SonarCloud Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN:    ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST }}
+
+  # ─── Checkov: Terraform hardening ─────────────────────────────────────────
+  checkov:
+    name: Checkov IaC Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: day-02-loan-underwriting/terraform
+          framework: terraform
+          soft_fail: true
+          output_format: sarif
+          output_file_path: checkov-results.sarif
+
+      - name: Upload Checkov results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: checkov-results.sarif
+          category: checkov

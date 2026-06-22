@@ -1,0 +1,17 @@
+{
+  "credit_score": 0.366271,
+  "dti_ratio": 0.198637,
+  "credit_utilisation_rate": 0.103617,
+  "missed_payments_count": 0.07846,
+  "loan_to_income_ratio": 0.057778,
+  "payment_history_score": 0.048912,
+  "employment_stability_score": 0.045131,
+  "estimated_monthly_payment": 0.033133,
+  "loan_amount": 0.016776,
+  "loan_term_months": 0.015973,
+  "existing_debt": 0.011299,
+  "annual_income": 0.008744,
+  "monthly_income": 0.008639,
+  "age": 0.004667,
+  "late_payments_count": 0.001964
+}

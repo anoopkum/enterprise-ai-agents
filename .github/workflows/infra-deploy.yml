@@ -1,0 +1,161 @@
+name: Infra Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "day-02-loan-underwriting/terraform/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: dev
+        type: choice
+        options: [dev]
+      destroy:
+        description: "Destroy infrastructure (danger)"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bootstrap:
+    name: Bootstrap TF State Backend
+    runs-on: ubuntu-latest
+    environment: dev
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve environment
+        id: set-env
+        run: echo "environment=${{ github.event.inputs.environment || 'dev' }}" >> "$GITHUB_OUTPUT"
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create storage backend (idempotent)
+        run: |
+          az group create \
+            --name rg-tfstate-loan \
+            --location eastus \
+            --tags managed_by=github-actions project=loan-underwriting \
+            --output none || true
+
+          az storage account create \
+            --name stloanunderwritingtf \
+            --resource-group rg-tfstate-loan \
+            --sku Standard_LRS \
+            --min-tls-version TLS1_2 \
+            --allow-blob-public-access false \
+            --output none || true
+
+          az storage container create \
+            --name tfstate \
+            --account-name stloanunderwritingtf \
+            --auth-mode login \
+            --output none || true
+
+  terraform:
+    name: Terraform ${{ github.event.inputs.destroy == 'true' && 'Destroy' || 'Apply' }} (dev)
+    runs-on: ubuntu-latest
+    needs: bootstrap
+    environment: dev
+    defaults:
+      run:
+        working-directory: day-02-loan-underwriting/terraform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform init
+        env:
+          ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:        "true"
+        run: terraform init
+
+      - name: Terraform apply
+        if: ${{ github.event.inputs.destroy != 'true' }}
+        env:
+          ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:           "true"
+          TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          TF_VAR_container_image: "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+        run: |
+          terraform apply \
+            -var-file="environments/dev.tfvars" \
+            -auto-approve \
+            -no-color
+
+      - name: Terraform destroy
+        if: ${{ github.event.inputs.destroy == 'true' }}
+        env:
+          ARM_CLIENT_ID:          ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:          ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID:    ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:           "true"
+          TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          TF_VAR_container_image: "placeholder"
+        run: |
+          terraform destroy \
+            -var-file="environments/dev.tfvars" \
+            -auto-approve \
+            -no-color
+
+      - name: Capture outputs
+        if: ${{ github.event.inputs.destroy != 'true' }}
+        id: tf-out
+        env:
+          ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_USE_OIDC:        "true"
+        run: |
+          ACR=$(terraform output -raw acr_login_server)
+          URL=$(terraform output -raw container_app_url)
+          KV=$(terraform output -raw key_vault_name)
+          echo "acr_login_server=$ACR"  >> "$GITHUB_OUTPUT"
+          echo "container_app_url=$URL" >> "$GITHUB_OUTPUT"
+          echo "key_vault_name=$KV"     >> "$GITHUB_OUTPUT"
+          echo ""
+          echo "### Next step: add ACR_LOGIN_SERVER secret to GitHub"
+          echo "gh secret set ACR_LOGIN_SERVER --body \"$ACR\" --repo anoopkum/enterprise-ai-agents"
+
+      - name: Job summary
+        if: ${{ github.event.inputs.destroy != 'true' }}
+        run: |
+          echo "## Infra deploy complete — dev" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ACR | \`${{ steps.tf-out.outputs.acr_login_server }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Container App | ${{ steps.tf-out.outputs.container_app_url }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key Vault | ${{ steps.tf-out.outputs.key_vault_name }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Add \`ACR_LOGIN_SERVER\` secret before running ml-deploy:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "gh secret set ACR_LOGIN_SERVER --body \"${{ steps.tf-out.outputs.acr_login_server }}\" --repo anoopkum/enterprise-ai-agents" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"

@@ -61,15 +61,16 @@ class RiskScoringAgent:
         application = context["application"]
         application_id = context["application_id"]
 
-        mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "mlruns"))
+        mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///mlruns/mlflow.db"))
 
         with mlflow.start_run(run_name=f"score-{application_id}") as run:
             mlflow.log_param("application_id", application_id)
             mlflow.log_param("model_version", os.environ.get("MODEL_VERSION", "1.0.0"))
             mlflow.log_param("model_path", os.environ.get("MODEL_PATH", "models/credit_risk_model.pkl"))
 
+            model = self.model  # triggers lazy load, sets self._feature_names
             feature_vector = build_feature_vector(application, self._feature_names)
-            probability = float(self.model.predict_proba([feature_vector])[0][1])
+            probability = float(model.predict_proba([feature_vector])[0][1])
             risk_band = _band(probability)
 
             mlflow.log_metric("risk_score", round(probability, 4))

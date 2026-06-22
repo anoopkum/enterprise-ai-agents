@@ -1,0 +1,206 @@
+name: ML & App Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "day-02-loan-underwriting/src/**"
+      - "day-02-loan-underwriting/scripts/**"
+      - "day-02-loan-underwriting/Dockerfile"
+      - "day-02-loan-underwriting/requirements.txt"
+  workflow_dispatch:
+    inputs:
+      retrain_model:
+        description: "Force model retrain"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  IMAGE_NAME: loan-underwriting
+
+jobs:
+  # ─── Train model ──────────────────────────────────────────────────────────
+  train:
+    name: Train Model
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: day-02-loan-underwriting
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Decide whether to retrain
+        id: retrain
+        run: |
+          if [ "${{ github.event.inputs.retrain_model }}" == "true" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only HEAD~1 2>/dev/null | grep -qE "scripts/train_model\.py|data/"; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Train model
+        if: steps.retrain.outputs.needed == 'true'
+        env:
+          MLFLOW_TRACKING_URI: "sqlite:///mlruns/mlflow.db"
+        run: |
+          mkdir -p mlruns models
+          python3 scripts/train_model.py 2>&1 | tee train.log
+          grep -E "ROC-AUC|Model saved|Top 5" train.log
+
+      - name: Upload model artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: credit-risk-model-${{ github.sha }}
+          path: day-02-loan-underwriting/models/
+          retention-days: 30
+
+  # ─── Build & push to ACR ──────────────────────────────────────────────────
+  build:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    needs: train
+    outputs:
+      image_tag:    ${{ steps.meta.outputs.version }}
+      image_digest: ${{ steps.push.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download model artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: credit-risk-model-${{ github.sha }}
+          path: day-02-loan-underwriting/models/
+
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name ${{ env.ACR_LOGIN_SERVER }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+
+      - name: Build and push to ACR
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: day-02-loan-underwriting
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Snyk container scan
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          args: --severity-threshold=high --sarif-file-output=snyk-container.sarif
+        continue-on-error: true
+
+      - name: Upload container scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-container.sarif
+          category: snyk-container
+
+  # ─── Deploy to dev ────────────────────────────────────────────────────────
+  deploy-dev:
+    name: Deploy → dev
+    runs-on: ubuntu-latest
+    needs: build
+    environment: dev
+
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Update Container App image
+        run: |
+          az containerapp update \
+            --name ca-loan-underwriting-dev \
+            --resource-group rg-loan-underwriting-dev \
+            --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image_digest }} \
+            --output table
+
+      - name: Wait for active revision
+        run: |
+          for i in $(seq 1 12); do
+            STATUS=$(az containerapp revision list \
+              --name ca-loan-underwriting-dev \
+              --resource-group rg-loan-underwriting-dev \
+              --query "[0].properties.runningState" \
+              --output tsv 2>/dev/null || echo "Waiting")
+            echo "[$i/12] revision state: $STATUS"
+            [ "$STATUS" == "Running" ] && break
+            sleep 15
+          done
+
+      - name: Smoke test /health
+        run: |
+          APP_URL=$(az containerapp show \
+            --name ca-loan-underwriting-dev \
+            --resource-group rg-loan-underwriting-dev \
+            --query "properties.configuration.ingress.fqdn" \
+            --output tsv)
+          curl --fail --retry 5 --retry-delay 10 "https://$APP_URL/health"
+
+      - name: Job summary
+        run: |
+          echo "## Deploy dev complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Image | \`${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Digest | \`${{ needs.build.outputs.image_digest }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| SHA | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ─── Prod deploy skeleton (uncomment when ready) ──────────────────────────
+  # deploy-prod:
+  #   name: Deploy → prod
+  #   runs-on: ubuntu-latest
+  #   needs: [build, deploy-dev]
+  #   environment: prod    # add required reviewer in GitHub → Environments → prod
+  #   steps:
+  #     - uses: azure/login@v2
+  #       with:
+  #         client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+  #         tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+  #         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  #     - name: Update Container App image (prod)
+  #       run: |
+  #         az containerapp update \
+  #           --name ca-loan-underwriting-prod \
+  #           --resource-group rg-loan-underwriting-prod \
+  #           --image ${{ env.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}@${{ needs.build.outputs.image_digest }}
