@@ -62,9 +62,12 @@ module "acr" {
   location            = var.location
   tags                = local.tags
   is_production       = local.is_production
-  pull_principal_ids  = [module.containerapp.principal_id]
+}
 
-  depends_on = [module.containerapp]
+resource "azurerm_role_assignment" "ca_acr_pull" {
+  scope                = module.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = module.containerapp.principal_id
 }
 
 module "openai" {

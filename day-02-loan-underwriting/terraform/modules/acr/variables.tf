@@ -7,7 +7,3 @@ variable "secondary_location" {
   type    = string
   default = "westus"
 }
-variable "pull_principal_ids" {
-  type    = list(string)
-  default = []
-}

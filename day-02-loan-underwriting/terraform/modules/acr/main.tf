@@ -14,10 +14,3 @@ resource "azurerm_container_registry" "this" {
     }
   }
 }
-
-resource "azurerm_role_assignment" "acr_pull" {
-  for_each             = toset(var.pull_principal_ids)
-  scope                = azurerm_container_registry.this.id
-  role_definition_name = "AcrPull"
-  principal_id         = each.value
-}
