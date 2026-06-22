@@ -1,0 +1,92 @@
+[
+  {
+    "rule_id": "FCA-CONC-5.2-001",
+    "framework": "FCA",
+    "reference": "CONC 5.2A.4 R",
+    "description": "Creditworthiness assessment — affordability",
+    "text": "FCA CONC 5.2A.4: A firm must not enter into a regulated credit agreement with a customer unless it has undertaken a reasonable assessment of whether the customer can afford to repay the credit. The assessment must consider the customer's net income, regular expenditure, and ability to sustain repayments without undue difficulty.",
+    "triggers": ["automated_decision", "high_dti", "decline"],
+    "severity": "HIGH"
+  },
+  {
+    "rule_id": "FCA-CONC-5.2-002",
+    "framework": "FCA",
+    "reference": "CONC 5.2A.36 G",
+    "description": "Creditworthiness — debt-to-income guidance",
+    "text": "FCA CONC 5.2A.36: Firms should treat a debt-to-income (DTI) ratio exceeding 45% as a strong indicator of potential financial difficulty. Where DTI exceeds 55%, the presumption should be that credit is not affordable unless the firm has specific evidence to the contrary.",
+    "triggers": ["high_dti", "automated_decision"],
+    "severity": "HIGH"
+  },
+  {
+    "rule_id": "GDPR-ART22-001",
+    "framework": "GDPR",
+    "reference": "GDPR Article 22(1) and (3)",
+    "description": "Automated individual decision-making including profiling",
+    "text": "GDPR Article 22: Data subjects shall have the right not to be subject to a decision based solely on automated processing, including profiling, which produces legal or similarly significant effects. Where such automated decisions are made for credit purposes, the data subject must be informed and provided the right to obtain human intervention, express their point of view, and contest the decision. The firm must implement suitable measures to safeguard the data subject's rights, freedoms and legitimate interests.",
+    "triggers": ["automated_decision", "decline"],
+    "severity": "HIGH"
+  },
+  {
+    "rule_id": "GDPR-ART13-001",
+    "framework": "GDPR",
+    "reference": "GDPR Article 13(2)(f)",
+    "description": "Transparency in automated decision-making",
+    "text": "GDPR Article 13(2)(f): Where personal data is used in automated decision-making, including profiling, the data controller must provide meaningful information about the logic involved, the significance and the envisaged consequences of such processing for the data subject at the time the data is obtained.",
+    "triggers": ["automated_decision"],
+    "severity": "MEDIUM"
+  },
+  {
+    "rule_id": "BASEL3-LCR-001",
+    "framework": "Basel III",
+    "reference": "Basel III — LCR and NSFR (CRD IV Art. 87)",
+    "description": "Loan-to-income capital weighting requirements",
+    "text": "Basel III guidance requires firms to apply enhanced capital weighting for retail credit exposures where the loan-to-income (LTI) ratio exceeds 4.5x. Under the Internal Ratings-Based (IRB) approach, probability of default (PD) estimates must be stress-tested against a two-standard-deviation economic downturn. Loans with LTI >5.5x must be reported to the credit risk committee and carry a minimum Risk Weight of 75% under the Standardised Approach.",
+    "triggers": ["high_lti", "automated_decision"],
+    "severity": "MEDIUM"
+  },
+  {
+    "rule_id": "BASEL3-PD-001",
+    "framework": "Basel III",
+    "reference": "Basel III — IRB Approach, BCBS 128 para. 285",
+    "description": "Probability of default floor and validation",
+    "text": "Basel III BCBS 128 para. 285: Under the IRB approach, PD estimates must reflect long-run average default rates. A minimum PD floor of 0.03% applies to all retail exposures. ML-derived PD estimates must be independently validated annually and back-tested against observed default rates. Any PD model with Gini coefficient below 0.40 must be reviewed by a Model Risk Committee.",
+    "triggers": ["automated_decision"],
+    "severity": "MEDIUM"
+  },
+  {
+    "rule_id": "FCA-CD-001",
+    "framework": "FCA Consumer Duty",
+    "reference": "PRIN 2A.3 (Consumer Duty — Products and Services)",
+    "description": "Fair outcomes for retail customers",
+    "text": "FCA Consumer Duty PRIN 2A.3: Firms must act to deliver good outcomes for retail customers. For credit products, a good outcome means the product meets the customer's needs, the price is fair value, the customer can make informed decisions, and the customer receives appropriate support. Firms must proactively identify where customer outcomes may be poor and take action to address this before customer harm occurs.",
+    "triggers": ["automated_decision", "decline", "high_dti"],
+    "severity": "HIGH"
+  },
+  {
+    "rule_id": "FCA-CD-002",
+    "framework": "FCA Consumer Duty",
+    "reference": "PRIN 2A.4 (Consumer Duty — Customer Understanding)",
+    "description": "Communications must support informed customer decisions",
+    "text": "FCA Consumer Duty PRIN 2A.4: All communications with retail customers must be clear, fair and not misleading. For automated credit decisions, firms must communicate the outcome in plain English, explain the main reasons for the decision, and provide clear information on how the customer can seek a review, complain, or access alternative products.",
+    "triggers": ["automated_decision", "decline"],
+    "severity": "HIGH"
+  },
+  {
+    "rule_id": "FCA-CONC-7-001",
+    "framework": "FCA",
+    "reference": "CONC 7.3.4 R — Arrears and default handling",
+    "description": "Firms must treat customers in financial difficulty fairly",
+    "text": "FCA CONC 7.3.4: Where a firm has reasonable cause to suspect a customer may be in financial difficulty, it must not automatically decline future applications without first contacting the customer to understand their circumstances. Evidence of recent missed payments should trigger a vulnerability assessment before a credit decision is finalised.",
+    "triggers": ["decline", "high_dti"],
+    "severity": "MEDIUM"
+  },
+  {
+    "rule_id": "ICO-MLG-001",
+    "framework": "ICO",
+    "reference": "ICO Guidance on AI and Data Protection (2023)",
+    "description": "Explainability requirements for AI-driven credit decisions",
+    "text": "ICO Guidance 2023: Firms using AI for credit decisions must be able to explain, in terms meaningful to the individual, why the AI system reached its conclusion. Model explanations must not rely solely on feature importance rankings — they must translate into the context of the individual applicant's circumstances. Firms should maintain documentation of model performance, training data sources, and known limitations.",
+    "triggers": ["automated_decision", "decline"],
+    "severity": "MEDIUM"
+  }
+]
