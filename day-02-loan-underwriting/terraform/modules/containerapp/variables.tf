@@ -5,7 +5,10 @@ variable "location"              { type = string }
 variable "tags"                  { type = map(string) }
 variable "key_vault_id"          { type = string }
 variable "ai_foundry_endpoint"   { type = string }
-variable "app_insights_conn_str" { type = string; sensitive = true }
+variable "app_insights_conn_str" {
+  type      = string
+  sensitive = true
+}
 variable "environment_name"      { type = string }
 variable "container_image"       { type = string }
 variable "acr_login_server"      { type = string }
