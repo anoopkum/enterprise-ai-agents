@@ -74,14 +74,6 @@ resource "azurerm_container_app" "app" {
         secret_name = "appinsights-conn-str"
       }
 
-      liveness_probe {
-        transport               = "HTTP"
-        path                    = "/health"
-        port                    = 8000
-        initial_delay           = 15
-        interval_seconds        = 30
-        failure_count_threshold = 3
-      }
     }
 
     min_replicas = var.is_production ? 2 : 0
@@ -96,6 +88,11 @@ resource "azurerm_container_app" "app" {
   secret {
     name  = "appinsights-conn-str"
     value = var.app_insights_conn_str
+  }
+
+  timeouts {
+    create = "30m"
+    update = "30m"
   }
 
   lifecycle {
