@@ -6,7 +6,7 @@ param environment string = 'dev'
 param location string = resourceGroup().location
 
 @description('Project identifier prefix')
-param projectName string = 'loan-agent'
+param projectName string = 'loan-underwriting'
 
 @description('Azure AD Object ID for Key Vault admin role')
 param adminObjectId string
@@ -20,7 +20,7 @@ var tags = {
   environment: environment
   managedBy: 'bicep'
   day: '02'
-  agent: 'loan-credit-intelligence'
+  agent: 'loan-underwriting'
   costCenter: isProduction ? 'prod-banking' : 'dev-test'
 }
 

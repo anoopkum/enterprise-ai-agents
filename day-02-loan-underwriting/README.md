@@ -75,7 +75,7 @@ The `scripts/train_model.py` trains on either the real UCI CSV or auto-generated
 ## File Structure
 
 ```
-day-02-loan-intelligence/
+day-02-loan-underwriting/
 ├── src/
 │   ├── agents/
 │   │   ├── etl_agent.py              # Validate → enrich → ChromaDB

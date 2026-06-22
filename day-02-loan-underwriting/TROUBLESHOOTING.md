@@ -68,11 +68,11 @@ For Azure ML tracking URI, ensure the workspace exists and your identity has the
 
 ## `pytest` fails with `ModuleNotFoundError: No module named 'src'`
 
-**Cause:** The tests must be run from the `day-02-loan-intelligence/` directory, not the repo root.
+**Cause:** The tests must be run from the `day-02-loan-underwriting/` directory, not the repo root.
 
 **Fix:**
 ```bash
-cd day-02-loan-intelligence
+cd day-02-loan-underwriting
 pytest tests/ -m unit -v
 ```
 
