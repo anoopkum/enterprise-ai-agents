@@ -13,4 +13,8 @@ resource "azurerm_container_registry" "this" {
       zone_redundancy_enabled = true
     }
   }
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }

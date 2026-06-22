@@ -11,6 +11,10 @@ resource "azurerm_cognitive_account" "openai" {
   network_acls {
     default_action = var.is_production ? "Deny" : "Allow"
   }
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_cognitive_deployment" "gpt4o" {

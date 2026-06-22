@@ -5,6 +5,10 @@ resource "azurerm_log_analytics_workspace" "this" {
   sku                 = "PerGB2018"
   retention_in_days   = var.is_production ? 90 : 30
   tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_application_insights" "this" {
@@ -15,6 +19,10 @@ resource "azurerm_application_insights" "this" {
   application_type    = "web"
   retention_in_days   = var.is_production ? 90 : 30
   tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_monitor_metric_alert" "high_decline_rate" {

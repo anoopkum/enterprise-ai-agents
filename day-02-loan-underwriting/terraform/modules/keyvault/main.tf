@@ -13,6 +13,10 @@ resource "azurerm_key_vault" "this" {
     default_action = var.is_production ? "Deny" : "Allow"
     bypass         = "AzureServices"
   }
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_role_assignment" "admin" {

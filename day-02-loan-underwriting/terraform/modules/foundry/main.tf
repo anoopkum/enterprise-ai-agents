@@ -5,6 +5,10 @@ resource "azurerm_storage_account" "hub" {
   account_tier             = "Standard"
   account_replication_type = var.is_production ? "GRS" : "LRS"
   tags                     = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_application_insights" "hub" {
@@ -13,6 +17,10 @@ resource "azurerm_application_insights" "hub" {
   location            = var.location
   application_type    = "web"
   tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 # AzureRM 3.x: Hub/Project kind requires AzureRM 4.x — using standard workspace
@@ -29,6 +37,10 @@ resource "azurerm_machine_learning_workspace" "hub" {
 
   identity {
     type = "SystemAssigned"
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 }
 

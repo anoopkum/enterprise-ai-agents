@@ -5,6 +5,10 @@ resource "azurerm_log_analytics_workspace" "this" {
   sku                 = "PerGB2018"
   retention_in_days   = var.is_production ? 90 : 30
   tags                = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_container_app_environment" "this" {
@@ -13,6 +17,10 @@ resource "azurerm_container_app_environment" "this" {
   location                   = var.location
   log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
   tags                       = var.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_container_app" "this" {
@@ -88,5 +96,9 @@ resource "azurerm_container_app" "this" {
   secret {
     name  = "appinsights-conn-str"
     value = var.app_insights_conn_str
+  }
+
+  lifecycle {
+    ignore_changes = [tags]
   }
 }
