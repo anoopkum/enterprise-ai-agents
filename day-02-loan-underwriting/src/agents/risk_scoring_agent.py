@@ -5,7 +5,6 @@ returns probability + risk band, and tracks each scoring run with MLflow.
 import json
 import logging
 import os
-from datetime import datetime, timezone
 from typing import Any
 
 logger = logging.getLogger(__name__)

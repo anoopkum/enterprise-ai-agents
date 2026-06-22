@@ -2,7 +2,6 @@
 ETL Agent — ingests loan applications, validates fields, enriches with derived features,
 and stores normalised records in ChromaDB for downstream agents.
 """
-import json
 import logging
 import uuid
 from datetime import datetime, timezone

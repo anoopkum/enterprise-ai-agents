@@ -157,15 +157,17 @@ jobs:
         continue-on-error: true
 
       - name: Upload Snyk SCA to GitHub Security
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: day-02-loan-underwriting/snyk-sca.sarif
+          sarif_file: snyk-sca.sarif
           category: snyk-sca
 
       - name: Upload Snyk IaC to GitHub Security
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: day-02-loan-underwriting/snyk-iac.sarif
+          sarif_file: snyk-iac.sarif
           category: snyk-iac
 
   # ─── SonarQube: SAST + quality gate ───────────────────────────────────────

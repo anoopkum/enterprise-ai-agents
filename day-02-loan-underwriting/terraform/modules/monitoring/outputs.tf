@@ -6,4 +6,4 @@ output "connection_string" {
   value     = azurerm_application_insights.appi.connection_string
   sensitive = true
 }
-output "id"                  { value = azurerm_application_insights.appi.id }
+output "id" { value = azurerm_application_insights.appi.id }

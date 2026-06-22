@@ -1,5 +1,4 @@
 """Tool: Application field validation and normalisation."""
-import re
 from typing import Any
 
 

@@ -1,5 +1,4 @@
 """Pydantic models for loan application request/response validation."""
-from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
