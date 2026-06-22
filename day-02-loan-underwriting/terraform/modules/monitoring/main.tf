@@ -1,4 +1,4 @@
-resource "azurerm_log_analytics_workspace" "this" {
+resource "azurerm_log_analytics_workspace" "law" {
   name                = "${var.name}-workspace"
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -11,7 +11,7 @@ resource "azurerm_log_analytics_workspace" "this" {
   }
 }
 
-resource "azurerm_application_insights" "this" {
+resource "azurerm_application_insights" "appi" {
   name                = var.name
   resource_group_name = var.resource_group_name
   location            = var.location

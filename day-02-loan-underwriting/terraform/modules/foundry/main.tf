@@ -1,4 +1,4 @@
-resource "azurerm_storage_account" "hub" {
+resource "azurerm_storage_account" "aml" {
   name                     = replace("st${var.hub_name}", "-", "")
   resource_group_name      = var.resource_group_name
   location                 = var.location
@@ -11,7 +11,7 @@ resource "azurerm_storage_account" "hub" {
   }
 }
 
-resource "azurerm_application_insights" "hub" {
+resource "azurerm_application_insights" "aml" {
   name                = "${var.hub_name}-appi"
   resource_group_name = var.resource_group_name
   location            = var.location

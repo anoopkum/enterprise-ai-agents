@@ -1,4 +1,4 @@
-resource "azurerm_log_analytics_workspace" "this" {
+resource "azurerm_log_analytics_workspace" "law" {
   name                = "${var.env_name}-logs"
   resource_group_name = var.resource_group_name
   location            = var.location
