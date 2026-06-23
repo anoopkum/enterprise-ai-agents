@@ -48,22 +48,16 @@ resource "azurerm_container_app" "app" {
   template {
     container {
       name   = "loan-agent"
-      image  = var.container_image
-      cpu    = var.is_production ? 2.0 : 1.0
-      memory = var.is_production ? "4Gi" : "2Gi"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      cpu    = 0.5
+      memory = "1Gi"
     }
 
     min_replicas = 0
-    max_replicas = var.is_production ? 20 : 3
-  }
-
-  secret {
-    name  = "appinsights-conn-str"
-    value = var.app_insights_conn_str
+    max_replicas = 1
   }
 
   lifecycle {
-    # ml-deploy manages image, port, env vars, scaling rules, and registry after initial creation
-    ignore_changes = [tags, template, ingress, registry, secret]
+    ignore_changes = [tags, template, ingress, registry, secret, identity]
   }
 }
