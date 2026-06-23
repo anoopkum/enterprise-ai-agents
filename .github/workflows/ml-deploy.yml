@@ -169,6 +169,12 @@ jobs:
 
       - name: Update Container App image
         run: |
+          az containerapp registry set \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --server ${{ needs.build.outputs.acr_login_server }} \
+            --identity system \
+            --output none
           az containerapp update \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
