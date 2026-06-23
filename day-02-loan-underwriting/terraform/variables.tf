@@ -28,7 +28,7 @@ variable "admin_object_id" {
 variable "ai_foundry_endpoint" {
   description = "Azure AI Foundry project endpoint (existing hub — not managed by this Terraform)"
   type        = string
-  default     = "https://ai-automation-rxt-resource.services.ai.azure.com/api/projects/ai-automation-rxt"
+  default     = "https://oai-aihub-fraud-agent-staging.openai.azure.com"
 }
 
 variable "container_image" {
