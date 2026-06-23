@@ -60,7 +60,11 @@ class RiskScoringAgent:
         application = context["application"]
         application_id = context["application_id"]
 
+        artifact_root = os.environ.get("MLFLOW_ARTIFACT_ROOT", "/tmp/mlruns/artifacts")
         mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "sqlite:////tmp/mlruns/mlflow.db"))
+        if not mlflow.get_experiment_by_name("loan-underwriting"):
+            mlflow.create_experiment("loan-underwriting", artifact_location=f"file://{artifact_root}")
+        mlflow.set_experiment("loan-underwriting")
 
         with mlflow.start_run(run_name=f"score-{application_id}") as run:
             mlflow.log_param("application_id", application_id)
