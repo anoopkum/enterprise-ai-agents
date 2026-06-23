@@ -34,14 +34,9 @@ resource "azurerm_container_app" "app" {
     type = "SystemAssigned"
   }
 
-  registry {
-    server   = var.acr_login_server
-    identity = "system"
-  }
-
   ingress {
     external_enabled = true
-    target_port      = 8000
+    target_port      = 80
     transport        = "http"
 
     traffic_weight {
@@ -53,52 +48,16 @@ resource "azurerm_container_app" "app" {
   template {
     container {
       name   = "loan-agent"
-      image  = var.container_image
-      cpu    = var.is_production ? 2.0 : 1.0
-      memory = var.is_production ? "4Gi" : "2Gi"
-
-      env {
-        name  = "ENVIRONMENT"
-        value = var.environment_name
-      }
-      env {
-        name  = "AI_FOUNDRY_ENDPOINT"
-        value = var.ai_foundry_endpoint
-      }
-      env {
-        name  = "AZURE_OPENAI_DEPLOYMENT"
-        value = "gpt-4o"
-      }
-      env {
-        name        = "APPLICATIONINSIGHTS_CONNECTION_STRING"
-        secret_name = "appinsights-conn-str"
-      }
-
-      liveness_probe {
-        transport               = "HTTP"
-        path                    = "/health"
-        port                    = 8000
-        initial_delay           = 15
-        interval_seconds        = 30
-        failure_count_threshold = 3
-      }
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      cpu    = 0.5
+      memory = "1Gi"
     }
 
-    min_replicas = var.is_production ? 2 : 0
-    max_replicas = var.is_production ? 20 : 3
-
-    http_scale_rule {
-      name                = "http-scaling"
-      concurrent_requests = "50"
-    }
-  }
-
-  secret {
-    name  = "appinsights-conn-str"
-    value = var.app_insights_conn_str
+    min_replicas = 0
+    max_replicas = 1
   }
 
   lifecycle {
-    ignore_changes = [tags]
+    ignore_changes = [tags, template, ingress, registry, secret, identity]
   }
 }

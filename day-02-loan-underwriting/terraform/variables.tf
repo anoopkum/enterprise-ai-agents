@@ -25,6 +25,12 @@ variable "admin_object_id" {
   sensitive   = true
 }
 
+variable "ai_foundry_endpoint" {
+  description = "Azure AI Foundry project endpoint (existing hub — not managed by this Terraform)"
+  type        = string
+  default     = "https://oai-aihub-fraud-agent-staging.openai.azure.com"
+}
+
 variable "container_image" {
   description = "Full container image URI"
   type        = string
