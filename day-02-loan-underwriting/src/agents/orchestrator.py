@@ -80,7 +80,7 @@ class LoanIntelligenceOrchestrator:
         try:
             import mlflow
             import os as _os
-            mlflow.set_tracking_uri(_os.environ.get("MLFLOW_TRACKING_URI", "mlruns"))
+            mlflow.set_tracking_uri(_os.environ.get("MLFLOW_TRACKING_URI", "sqlite:////tmp/mlruns/mlflow.db"))
             status["mlflow"] = "ok"
         except Exception as exc:
             status["mlflow"] = f"error: {exc}"

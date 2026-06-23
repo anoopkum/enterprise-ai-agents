@@ -60,7 +60,7 @@ class RiskScoringAgent:
         application = context["application"]
         application_id = context["application_id"]
 
-        mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///mlruns/mlflow.db"))
+        mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "sqlite:////tmp/mlruns/mlflow.db"))
 
         with mlflow.start_run(run_name=f"score-{application_id}") as run:
             mlflow.log_param("application_id", application_id)
