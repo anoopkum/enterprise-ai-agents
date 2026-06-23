@@ -34,14 +34,9 @@ resource "azurerm_container_app" "app" {
     type = "SystemAssigned"
   }
 
-  registry {
-    server   = var.acr_login_server
-    identity = "system"
-  }
-
   ingress {
     external_enabled = true
-    target_port      = 8000
+    target_port      = 80
     transport        = "http"
 
     traffic_weight {
@@ -56,33 +51,10 @@ resource "azurerm_container_app" "app" {
       image  = var.container_image
       cpu    = var.is_production ? 2.0 : 1.0
       memory = var.is_production ? "4Gi" : "2Gi"
-
-      env {
-        name  = "ENVIRONMENT"
-        value = var.environment_name
-      }
-      env {
-        name  = "AI_FOUNDRY_ENDPOINT"
-        value = var.ai_foundry_endpoint
-      }
-      env {
-        name  = "AZURE_OPENAI_DEPLOYMENT"
-        value = "gpt-4o"
-      }
-      env {
-        name        = "APPLICATIONINSIGHTS_CONNECTION_STRING"
-        secret_name = "appinsights-conn-str"
-      }
-
     }
 
-    min_replicas = var.is_production ? 2 : 0
+    min_replicas = 0
     max_replicas = var.is_production ? 20 : 3
-
-    http_scale_rule {
-      name                = "http-scaling"
-      concurrent_requests = "50"
-    }
   }
 
   secret {
@@ -90,12 +62,8 @@ resource "azurerm_container_app" "app" {
     value = var.app_insights_conn_str
   }
 
-  timeouts {
-    create = "30m"
-    update = "30m"
-  }
-
   lifecycle {
-    ignore_changes = [tags]
+    # ml-deploy manages image, port, env vars, scaling rules, and registry after initial creation
+    ignore_changes = [tags, template, ingress, registry, secret]
   }
 }
