@@ -25,6 +25,12 @@ variable "admin_object_id" {
   sensitive   = true
 }
 
+variable "ai_foundry_endpoint" {
+  description = "Azure AI Foundry project endpoint (existing hub — not managed by this Terraform)"
+  type        = string
+  default     = "https://ai-automation-rxt-resource.services.ai.azure.com/api/projects/ai-automation-rxt"
+}
+
 variable "container_image" {
   description = "Full container image URI"
   type        = string

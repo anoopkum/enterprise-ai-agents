@@ -84,18 +84,6 @@ module "openai" {
   is_production       = local.is_production
 }
 
-module "foundry" {
-  source              = "./modules/foundry"
-  hub_name            = "aihub-lu-${var.environment}"
-  project_name        = "proj-lu-${var.environment}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  tags                = local.tags
-  key_vault_id        = module.keyvault.id
-  openai_id           = module.openai.id
-  is_production       = local.is_production
-}
-
 module "monitoring" {
   source              = "./modules/monitoring"
   name                = "appi-${local.prefix}"
@@ -114,14 +102,14 @@ module "containerapp" {
   location              = var.location
   tags                  = local.tags
   key_vault_id          = module.keyvault.id
-  ai_foundry_endpoint   = module.foundry.endpoint
+  ai_foundry_endpoint   = var.ai_foundry_endpoint
   app_insights_conn_str = module.monitoring.connection_string
   environment_name      = var.environment
   container_image       = var.container_image
   acr_login_server      = "${replace("acr${local.prefix}", "-", "")}.azurecr.io"
   is_production         = local.is_production
 
-  depends_on = [module.keyvault, module.foundry, module.monitoring]
+  depends_on = [module.keyvault, module.monitoring]
 }
 
 resource "azurerm_role_assignment" "ca_kv_secrets" {

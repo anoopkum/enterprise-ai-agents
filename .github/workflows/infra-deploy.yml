@@ -101,6 +101,25 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
 
+      - name: Remove orphaned Container App if not in state
+        if: ${{ github.event.inputs.destroy != 'true' }}
+        env:
+          ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET:   ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          IN_STATE=$(terraform state list 2>/dev/null | grep "module.containerapp.azurerm_container_app.app" || true)
+          if [ -z "$IN_STATE" ]; then
+            echo "Container App not in state — deleting from Azure so Terraform can recreate it"
+            az containerapp delete \
+              --name ca-loan-underwriting-dev \
+              --resource-group rg-loan-underwriting-dev \
+              --yes 2>/dev/null || true
+          else
+            echo "Container App already in state — no cleanup needed"
+          fi
+
       - name: Terraform apply
         if: ${{ github.event.inputs.destroy != 'true' }}
         env:

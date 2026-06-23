@@ -3,7 +3,7 @@ output "container_app_url" {
 }
 
 output "ai_foundry_endpoint" {
-  value = module.foundry.endpoint
+  value = var.ai_foundry_endpoint
 }
 
 output "key_vault_name" {
