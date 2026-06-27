@@ -38,7 +38,6 @@ module keyVault 'modules/keyvault.bicep' = {
     tags: tags
     adminObjectId: adminObjectId
     adminPrincipalType: adminPrincipalType
-    isProduction: isProduction
   }
 }
 
