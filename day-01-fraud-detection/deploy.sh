@@ -19,7 +19,7 @@ command -v az >/dev/null 2>&1 || { echo "Azure CLI not installed"; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "Docker not installed"; exit 1; }
 az account show >/dev/null 2>&1 || { echo "Not logged in: run 'az login'"; exit 1; }
 
-ADMIN_OBJECT_ID=$(az ad signed-in-user show --query id -o tsv)
+ADMIN_OBJECT_ID=${AZURE_ADMIN_OBJECT_ID:-$(az ad sp show --id "${AZURE_CLIENT_ID}" --query id -o tsv 2>/dev/null || az ad signed-in-user show --query id -o tsv)}
 echo "[1/6] Admin Object ID: ${ADMIN_OBJECT_ID}"
 
 # 2. Create resource group

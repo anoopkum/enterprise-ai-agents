@@ -45,7 +45,7 @@ resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
       '00482a5a-887f-4fb3-b363-3b7fe8e74483'  // Key Vault Administrator
     )
     principalId: adminObjectId
-    principalType: 'User'
+    principalType: 'ServicePrincipal'
   }
 }
 
