@@ -15,7 +15,6 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     }
     tenantId: subscription().tenantId
     enableRbacAuthorization: true
-    enableSoftDelete: false
     publicNetworkAccess: 'Enabled'
     networkAcls: {
       defaultAction: 'Allow'
