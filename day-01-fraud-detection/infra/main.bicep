@@ -33,7 +33,7 @@ var tags = {
 module keyVault 'modules/keyvault.bicep' = {
   name: 'keyVaultDeploy'
   params: {
-    name: 'kv-fd-${prefix}'
+    name: 'kv-fd-${environment}'
     location: location
     tags: tags
     adminObjectId: adminObjectId
