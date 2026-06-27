@@ -1,4 +1,5 @@
 name: Day 01 — Fraud Detection Agent CI/CD
+# KV purged 2026-06-27, retrigger
 
 on:
   push:
