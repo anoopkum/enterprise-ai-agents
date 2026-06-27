@@ -157,6 +157,6 @@
     "loan_term_months": 60,
     "interest_rate": 0.035,
     "credit_limit": 30000,
-    "current_balance": 100
+    "current_balance": 150
   }
 ]
