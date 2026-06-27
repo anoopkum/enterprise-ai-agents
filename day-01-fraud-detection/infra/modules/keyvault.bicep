@@ -2,6 +2,7 @@ param name string
 param location string
 param tags object
 param adminObjectId string
+param adminPrincipalType string = 'User'
 param isProduction bool
 
 // Dev: soft-delete 7 days (minimum), purge protection omitted (defaults false, allows cleanup)
@@ -45,7 +46,7 @@ resource adminRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01
       '00482a5a-887f-4fb3-b363-3b7fe8e74483'  // Key Vault Administrator
     )
     principalId: adminObjectId
-    principalType: 'ServicePrincipal'
+    principalType: adminPrincipalType
   }
 }
 

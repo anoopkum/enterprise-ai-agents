@@ -51,6 +51,7 @@ DEPLOYMENT_OUTPUT=$(az deployment group create \
       location="${LOCATION}" \
       projectName="${PROJECT_NAME}" \
       adminObjectId="${ADMIN_OBJECT_ID}" \
+      adminPrincipalType="${ADMIN_PRINCIPAL_TYPE:-ServicePrincipal}" \
   --output json)
 
 CONTAINER_APP_URL=$(echo "${DEPLOYMENT_OUTPUT}" | python3 -c \

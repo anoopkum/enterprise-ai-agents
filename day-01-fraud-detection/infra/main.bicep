@@ -11,6 +11,10 @@ param projectName string = 'fraud-agent'
 @description('Azure AD Object ID for Key Vault admin role')
 param adminObjectId string
 
+@description('Principal type for Key Vault admin role assignment: User or ServicePrincipal')
+@allowed(['User', 'ServicePrincipal'])
+param adminPrincipalType string = 'User'
+
 // Single flag that gates every cost-sensitive setting below
 var isProduction = environment == 'prod'
 var isStaging    = environment == 'staging'
@@ -33,6 +37,7 @@ module keyVault 'modules/keyvault.bicep' = {
     location: location
     tags: tags
     adminObjectId: adminObjectId
+    adminPrincipalType: adminPrincipalType
     isProduction: isProduction
   }
 }
