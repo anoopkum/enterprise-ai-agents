@@ -219,13 +219,27 @@ jobs:
           framework: terraform
           soft_fail: false
           output_format: cli,sarif
-          output_file_path: console,checkov-results.sarif
+          output_file_path: console,results.sarif
+
+      # The checkov-action writes SARIF relative to the workspace root (uses:
+      # steps ignore defaults.working-directory), and the exact name varies by
+      # version (a `results.sarif` file or a dir holding `results_sarif.sarif`).
+      # Locate it so a path mismatch can't fail this required job — the gate is
+      # the scan step above (soft_fail: false), not the upload.
+      - name: Locate Checkov SARIF
+        id: sarif
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          f=$(find . -type f -name '*.sarif' | head -n1)
+          echo "path=$f" >> "$GITHUB_OUTPUT"
+          echo "Found SARIF: ${f:-<none>}"
 
       - name: Upload Checkov SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && steps.sarif.outputs.path != ''
         with:
-          sarif_file: ${{ env.WORKING_DIR }}/terraform/checkov-results.sarif
+          sarif_file: ${{ steps.sarif.outputs.path }}
 
   # ── 6. Container Build + Trivy Scan (REQUIRED) ─────────────────────────────
   build-and-scan:
@@ -271,8 +285,8 @@ jobs:
           exit-code: "1"
 
       - name: Upload Trivy SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
 
