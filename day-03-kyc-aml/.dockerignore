@@ -10,6 +10,9 @@ Neo4j-*.txt
 tests/
 terraform/
 .github/
+.trivyignore
+.checkov.yaml
+.secrets.baseline
 .pytest_cache/
 .ruff_cache/
 .coverage

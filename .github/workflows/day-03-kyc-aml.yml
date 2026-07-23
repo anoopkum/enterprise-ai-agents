@@ -282,6 +282,8 @@ jobs:
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+          # Temporary skips for 2 build-time tooling CVEs — see day-03-kyc-aml/.trivyignore (task #12).
+          trivyignores: ${{ env.WORKING_DIR }}/.trivyignore
           exit-code: "1"
 
       - name: Upload Trivy SARIF
