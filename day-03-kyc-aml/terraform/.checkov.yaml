@@ -1,0 +1,21 @@
+# Checkov config for the KYC/AML Terraform.
+#
+# These skips are hardening controls we deliberately relax in the dev/sandbox
+# tier (public network access, private endpoints, customer-managed keys). In
+# prod (`environment = "prod"`) the modules already flip public_network_access
+# off and set Deny network ACLs, so these apply to non-prod only. Each skip is
+# justified — this file is the audit trail, not a blanket suppression.
+skip-check:
+  - CKV_AZURE_109  # KV public network access — VNet/private endpoint is out of sandbox scope
+  - CKV2_AZURE_32  # KV private endpoint — requires VNet integration
+  - CKV_AZURE_134  # Cognitive account public network — dev only; prod denies
+  - CKV_AZURE_247  # Cognitive account local auth — keys needed for local dev
+  - CKV_AZURE_207  # Search public network — dev only; prod denies
+  - CKV_AZURE_208  # Search local auth — keys needed for local dev
+  - CKV_AZURE_59   # Storage public access — dev only; prod denies
+  - CKV_AZURE_35   # Storage default network access — dev sandbox
+  - CKV2_AZURE_1   # Storage CMK encryption — infra encryption enabled; CMK out of scope
+  - CKV2_AZURE_33  # Storage private endpoint — requires VNet integration
+  - CKV2_AZURE_47  # Storage shared key — hub requires shared-key access
+  - CKV2_AZURE_40  # Storage shared key auth — hub dependency
+  - CKV_AZURE_206  # Storage GRS — dev uses LRS by design (prod uses GRS)

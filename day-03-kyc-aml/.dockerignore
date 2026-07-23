@@ -1,0 +1,27 @@
+# Never ship real KYC data or secrets into an image
+data/
+.env
+Neo4j-*.txt
+*credentials*.txt
+*.pem
+*.key
+
+# Dev / infra artifacts
+tests/
+terraform/
+.github/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.md
+!README.md
+.git/
+.gitignore
+.DS_Store
+/tmp/chroma/
+chroma/

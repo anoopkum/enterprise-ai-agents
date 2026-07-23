@@ -1,0 +1,40 @@
+# ─── Real personal data — NEVER commit ───
+# Real Aadhaar, birth certificates, voter IDs, bank statements live in DATA_DIR.
+# The pipeline reads them locally; they must never reach the public repo.
+data/*
+!data/.gitkeep
+!data/sample_synthetic/
+
+# Env & secrets
+.env
+*.pem
+*.key
+# Neo4j credential dumps (Aura downloads the DB password / API client secret once)
+Neo4j-*.txt
+*credentials*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Local stores
+/tmp/chroma/
+chroma/
+*.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars.local
+
+# OS
+.DS_Store
