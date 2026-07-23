@@ -33,5 +33,6 @@ class Chunk:
 
     @staticmethod
     def make_id(source_path: str, index: int, text: str) -> str:
-        h = hashlib.sha1(f"{source_path}:{index}:{text[:64]}".encode()).hexdigest()[:16]
+        # Non-cryptographic: SHA1 here is just a stable content ID, not a security digest.
+        h = hashlib.sha1(f"{source_path}:{index}:{text[:64]}".encode(), usedforsecurity=False).hexdigest()[:16]
         return f"chunk-{h}"

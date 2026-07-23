@@ -29,10 +29,12 @@ resource "azurerm_key_vault_secret" "search_endpoint" {
   name         = "azure-search-endpoint"
   value        = "https://${azurerm_search_service.search.name}.search.windows.net"
   key_vault_id = var.key_vault_id
+  content_type = "endpoint-url"
 }
 
 resource "azurerm_key_vault_secret" "search_key" {
   name         = "azure-search-admin-key"
   value        = azurerm_search_service.search.primary_key
   key_vault_id = var.key_vault_id
+  content_type = "api-key"
 }

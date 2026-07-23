@@ -11,7 +11,11 @@ langchain-community>=0.3.0
 langchain-text-splitters>=0.3.0
 neo4j>=5.24.0
 networkx>=3.3
-chromadb>=0.5.0
+# Pinned <1.0.0: CVE-2026-45829 (PYSEC-2026-311) is a pre-auth RCE affecting
+# chromadb 1.0.0–1.5.9 with no fix released. We only use the embedded
+# PersistentClient (no HTTP server, no trust_remote_code), and the 0.5.x API we
+# call is unaffected. Revisit when a patched 1.x ships.
+chromadb>=0.5.0,<1.0.0
 unstructured[docx,pptx,md,html]>=0.15.0
 python-docx>=1.1.0
 openpyxl>=3.1.0

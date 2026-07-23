@@ -19,3 +19,11 @@ skip-check:
   - CKV2_AZURE_47  # Storage shared key — hub requires shared-key access
   - CKV2_AZURE_40  # Storage shared key auth — hub dependency
   - CKV_AZURE_206  # Storage GRS — dev uses LRS by design (prod uses GRS)
+  - CKV_AZURE_236  # Cognitive local auth — keys needed for local dev; prod uses managed identity
+  - CKV_AZURE_124  # Search public network — dev only; prod sets public_network_access_enabled=false
+  - CKV_AZURE_189  # KV public network — VNet/private endpoint out of sandbox scope (see CKV_AZURE_109)
+  - CKV_AZURE_209  # Search SLA replicas — dev runs single replica; prod scales out
+  - CKV2_AZURE_22  # Cognitive CMK — infra encryption on; CMK out of sandbox scope
+  - CKV_AZURE_33   # Storage queue logging — hub storage has no queue workload
+  - CKV2_AZURE_41  # Storage SAS expiration policy — AAD auth used, SAS not issued
+  - CKV_AZURE_41   # KV secret expiration — key rotation handled operationally, not via fixed date

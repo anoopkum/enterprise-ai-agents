@@ -4,6 +4,7 @@ local fallback (ChromaDB, NetworkX, PyMuPDF) so the full pipeline runs with no
 cloud account, mirroring the Day 02 progressive-fallback pattern.
 """
 import os
+import tempfile
 from dataclasses import dataclass, field
 
 
@@ -35,7 +36,7 @@ class Config:
     neo4j_password: str = field(default_factory=lambda: _get("NEO4J_PASSWORD"))
 
     # Local fallbacks
-    chroma_persist_dir: str = field(default_factory=lambda: _get("CHROMA_PERSIST_DIR", "/tmp/chroma/kyc"))
+    chroma_persist_dir: str = field(default_factory=lambda: _get("CHROMA_PERSIST_DIR", os.path.join(tempfile.gettempdir(), "chroma", "kyc")))
 
     # Retrieval
     top_k_retrieve: int = field(default_factory=lambda: int(_get("TOP_K_RETRIEVE", "10")))

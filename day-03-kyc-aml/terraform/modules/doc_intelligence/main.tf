@@ -14,6 +14,11 @@ resource "azurerm_cognitive_account" "docintel" {
     default_action = var.is_production ? "Deny" : "Allow"
   }
 
+  # Managed identity so the account can be reached keyless via Azure AD.
+  identity {
+    type = "SystemAssigned"
+  }
+
   lifecycle {
     ignore_changes = [tags]
   }
@@ -24,10 +29,12 @@ resource "azurerm_key_vault_secret" "docintel_key" {
   name         = "doc-intelligence-key"
   value        = azurerm_cognitive_account.docintel.primary_access_key
   key_vault_id = var.key_vault_id
+  content_type = "api-key"
 }
 
 resource "azurerm_key_vault_secret" "docintel_endpoint" {
   name         = "doc-intelligence-endpoint"
   value        = azurerm_cognitive_account.docintel.endpoint
   key_vault_id = var.key_vault_id
+  content_type = "endpoint-url"
 }

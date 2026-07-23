@@ -53,7 +53,8 @@ class Embedder:
         """Deterministic pseudo-embedding: hash tokens into a fixed-dim bag vector."""
         vec = [0.0] * LOCAL_DIM
         for token in text.lower().split():
-            h = int(hashlib.md5(token.encode()).hexdigest(), 16)
+            # Non-cryptographic: MD5 only buckets tokens into a fixed-dim vector.
+            h = int(hashlib.md5(token.encode(), usedforsecurity=False).hexdigest(), 16)
             vec[h % LOCAL_DIM] += 1.0
         norm = sum(v * v for v in vec) ** 0.5 or 1.0
         return [v / norm for v in vec]

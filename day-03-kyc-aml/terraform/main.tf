@@ -149,6 +149,7 @@ resource "azurerm_key_vault_secret" "neo4j_uri" {
   name         = "neo4j-uri"
   value        = var.neo4j_uri
   key_vault_id = module.keyvault.id
+  content_type = "endpoint-url"
 }
 
 resource "azurerm_key_vault_secret" "neo4j_password" {
@@ -156,4 +157,5 @@ resource "azurerm_key_vault_secret" "neo4j_password" {
   name         = "neo4j-password"
   value        = var.neo4j_password
   key_vault_id = module.keyvault.id
+  content_type = "password"
 }

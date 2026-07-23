@@ -13,6 +13,11 @@ resource "azurerm_cognitive_account" "openai" {
     default_action = var.is_production ? "Deny" : "Allow"
   }
 
+  # Managed identity so the account can be reached keyless via Azure AD.
+  identity {
+    type = "SystemAssigned"
+  }
+
   lifecycle {
     ignore_changes = [tags]
   }
@@ -58,10 +63,12 @@ resource "azurerm_key_vault_secret" "openai_key" {
   name         = "azure-openai-api-key"
   value        = azurerm_cognitive_account.openai.primary_access_key
   key_vault_id = var.key_vault_id
+  content_type = "api-key"
 }
 
 resource "azurerm_key_vault_secret" "openai_endpoint" {
   name         = "azure-openai-endpoint"
   value        = azurerm_cognitive_account.openai.endpoint
   key_vault_id = var.key_vault_id
+  content_type = "endpoint-url"
 }
