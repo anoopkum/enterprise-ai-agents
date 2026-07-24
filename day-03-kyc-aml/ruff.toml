@@ -1,0 +1,10 @@
+# Explicit lint config so the gate is deterministic across ruff versions.
+# ruff's default rule set changes between releases (0.16 added B/DTZ/FURB/UP/…);
+# pinning `select` here means an upgrade can't silently change what CI enforces.
+# This is ruff's documented default selection (Pyflakes + a curated pycodestyle
+# subset). Broaden deliberately in a dedicated PR, not by accident.
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["E4", "E7", "E9", "F"]

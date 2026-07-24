@@ -1,0 +1,9 @@
+-r requirements.txt
+pytest>=8.3.0
+pytest-cov>=5.0.0
+pytest-asyncio>=0.24.0
+# Pinned exactly: a linter is a gate, so it must be deterministic. ruff 0.16.0
+# expanded its DEFAULT rule set (B, DTZ, FURB, UP, I, SIM, ...), which an
+# unpinned `>=` silently pulled in and broke CI on style rules mid-flight.
+# Bump deliberately (and adopt/curate new rules) rather than drift by surprise.
+ruff==0.15.22

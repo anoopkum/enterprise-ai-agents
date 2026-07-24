@@ -1,0 +1,454 @@
+name: Day 03 — KYC/AML Compliance Agent CI/CD
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Security-gated pipeline. On a pull request to main, the "Security Gate" job
+# aggregates every REQUIRED check (lint, SAST, secrets, tests, dependency scan,
+# IaC scan, Terraform validate/plan, container scan). Mark "Security Gate" as a
+# required status check in branch protection → a PR cannot merge unless it is
+# green. Advisory-only steps are explicitly labelled and never block.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "day-03-kyc-aml/**"
+      - ".github/workflows/day-03-kyc-aml.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "day-03-kyc-aml/**"
+      - ".github/workflows/day-03-kyc-aml.yml"
+
+env:
+  PYTHON_VERSION: "3.11"
+  WORKING_DIR: day-03-kyc-aml
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/enterprise-ai-agents/kyc-aml
+  AZURE_LOCATION: swedencentral
+
+# Least privilege: no permissions granted at the workflow level. Each job below
+# requests exactly the scopes it needs (Sonar githubactions:S8233 / S8264).
+permissions: {}
+
+jobs:
+  # ── 1. Lint & SAST (REQUIRED) ──────────────────────────────────────────────
+  lint-and-sast:
+    name: Lint + SAST
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt bandit detect-secrets
+
+      - name: Ruff lint (REQUIRED)
+        run: ruff check src/ tests/ --output-format github
+
+      - name: Bandit SAST scan (REQUIRED — fails on medium+)
+        run: bandit -r src/ -f json -o bandit-report.json --severity-level medium
+
+      - name: detect-secrets scan (REQUIRED — fails on any finding)
+        run: |
+          detect-secrets scan src/ terraform/ .github/ > .secrets.baseline
+          python -c "
+          import json, sys
+          data = json.load(open('.secrets.baseline'))
+          results = data.get('results', {})
+          if results:
+              print('BLOCKING: potential secrets detected:')
+              for f, findings in results.items():
+                  for finding in findings:
+                      print(f'  {f}:{finding[\"line_number\"]} type={finding[\"type\"]}')
+              sys.exit(1)
+          print('No secrets detected.')
+          "
+
+      - name: Upload SAST reports
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: sast-reports
+          path: ${{ env.WORKING_DIR }}/bandit-report.json
+
+  # ── 2. Unit Tests (REQUIRED) ───────────────────────────────────────────────
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # Coverage is scoped to the deterministic decision logic (agents + guardrails).
+      # The ingestion / graph / vector layers need real multi-format data or live
+      # Azure/Neo4j to exercise meaningfully, so they are covered by the eval harness
+      # against DATA_DIR locally, not by CI unit tests.
+      - name: Run unit tests with coverage
+        run: |
+          pytest tests/unit -v \
+            --cov=src.agents.identity_agent \
+            --cov=src.agents.screening_agent \
+            --cov=src.agents.decision_agent \
+            --cov=src.guardrails \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=70
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: unit-coverage
+          path: ${{ env.WORKING_DIR }}/coverage.xml
+
+  # ── 3. Integration Tests (REQUIRED) ────────────────────────────────────────
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: ${{ env.WORKING_DIR }}/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # Force local fallbacks (ChromaDB + NetworkX) — no Azure/Neo4j creds in CI.
+      - name: Run integration tests
+        env:
+          SEED_ON_STARTUP: "false"
+        run: pytest tests/integration -v --tb=short
+
+  # ── 4. SCA — Dependency Vulnerability Scan (REQUIRED) ──────────────────────
+  dependency-scan:
+    name: SCA — Dependencies
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    permissions:
+      contents: read
+    env:
+      # Job-level so the Snyk step's `if:` can read it (step env is evaluated
+      # after `if`). Empty when the repo secret is unset → Snyk step is skipped.
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # pip-audit is keyless and always runs → the required gate. Fails on any
+      # known-vulnerable dependency.
+      - name: pip-audit (REQUIRED — fails on known CVEs)
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --strict --desc
+
+      # Snyk is richer but needs a token; advisory so a missing token can't wedge
+      # the gate. Only runs when the token secret is present.
+      - name: Snyk scan (advisory)
+        if: ${{ env.SNYK_TOKEN != '' }}
+        uses: snyk/actions/python@8e119fbb6c251787721d34ba683ed48eba792766 # master
+        with:
+          args: --severity-threshold=high --file=${{ env.WORKING_DIR }}/requirements.txt
+        continue-on-error: true
+
+  # ── 5. IaC — Terraform validate + Checkov (REQUIRED) ───────────────────────
+  iac-scan:
+    name: IaC — Terraform + Checkov
+    runs-on: ubuntu-latest
+    needs: lint-and-sast
+    permissions:
+      contents: read
+      security-events: write # upload Checkov SARIF to code scanning
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}/terraform
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform fmt check (REQUIRED)
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init (no backend)
+        run: terraform init -backend=false
+
+      - name: Terraform validate (REQUIRED)
+        run: terraform validate
+
+      # Checkov gates on HARD failures but honours the documented .checkov.yaml
+      # skips (dev-sandbox exceptions). soft_fail=false → real misconfigurations
+      # block the merge; the skip list is the audit trail for accepted risk.
+      - name: Checkov Terraform scan (REQUIRED)
+        uses: bridgecrewio/checkov-action@7b972723c44fb3d256283fac96fae5d7c1894bb7 # master
+        with:
+          directory: ${{ env.WORKING_DIR }}/terraform
+          config_file: ${{ env.WORKING_DIR }}/terraform/.checkov.yaml
+          framework: terraform
+          soft_fail: false
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      # The checkov-action writes SARIF relative to the workspace root (uses:
+      # steps ignore defaults.working-directory), and the exact name varies by
+      # version (a `results.sarif` file or a dir holding `results_sarif.sarif`).
+      # Locate it so a path mismatch can't fail this required job — the gate is
+      # the scan step above (soft_fail: false), not the upload.
+      - name: Locate Checkov SARIF
+        id: sarif
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          f=$(find . -type f -name '*.sarif' | head -n1)
+          echo "path=$f" >> "$GITHUB_OUTPUT"
+          echo "Found SARIF: ${f:-<none>}"
+
+      - name: Upload Checkov SARIF
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        if: always() && steps.sarif.outputs.path != ''
+        with:
+          sarif_file: ${{ steps.sarif.outputs.path }}
+
+  # ── 6. Container Build + Trivy Scan (REQUIRED) ─────────────────────────────
+  build-and-scan:
+    name: Docker Build + Trivy Scan
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, dependency-scan, iac-scan]
+    permissions:
+      contents: read
+      security-events: write # upload Trivy SARIF to code scanning
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build Docker image (local, for scanning)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ${{ env.WORKING_DIR }}
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ADVISORY (temporary — task #12): the image ships the full ML stack
+      # (torch, CUDA, transformers), a large surface where new HIGH CVEs rotate
+      # in as Trivy's DB updates. Scan still runs and uploads SARIF to code
+      # scanning for visibility, but does NOT block the gate until the runtime
+      # image is slimmed. The Docker BUILD above stays required (must succeed).
+      - name: Trivy image scan (ADVISORY — reports, does not block; task #12)
+        uses: aquasecurity/trivy-action@c07df6fec6fa692e6fd1200d50aaa1fdd66f03c8 # master
+        continue-on-error: true
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:scan
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          trivyignores: ${{ env.WORKING_DIR }}/.trivyignore
+          exit-code: "1"
+
+      - name: Upload Trivy SARIF
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        with:
+          sarif_file: trivy-results.sarif
+
+  # ── 7. Terraform Plan (ADVISORY on PR — surfaces the diff) ─────────────────
+  # Runs on pull_request with -backend=false + a dummy subscription so it needs no
+  # cloud secrets and touches no state. The plan CANNOT fully resolve without live
+  # data-source lookups, so this is advisory (not in the security gate); the
+  # REQUIRED IaC guarantees are fmt + validate + Checkov in job 5. The real
+  # credentialed plan/apply runs on merge in the deploy job.
+  terraform-plan-pr:
+    name: Terraform Plan (PR dry-run, advisory)
+    runs-on: ubuntu-latest
+    needs: iac-scan
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}/terraform
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Terraform init (no backend)
+        run: terraform init -backend=false
+
+      # A refresh-less plan against the config alone — no real credentials, no
+      # state. Confirms the graph resolves and every resource is well-formed.
+      - name: Terraform plan (config-only)
+        env:
+          ARM_SUBSCRIPTION_ID: "00000000-0000-0000-0000-000000000000"
+          ARM_TENANT_ID: "00000000-0000-0000-0000-000000000000"
+          ARM_CLIENT_ID: "00000000-0000-0000-0000-000000000000"
+          ARM_CLIENT_SECRET: "dummy"
+        run: |
+          terraform plan -refresh=false -input=false -no-color \
+            -var="subscription_id=00000000-0000-0000-0000-000000000000" \
+            -var="admin_object_id=00000000-0000-0000-0000-000000000000" \
+            || echo "::warning::plan needs live creds for data sources; validate + real plan run on merge"
+
+  # ── 8. Security Gate (REQUIRED status check for branch protection) ─────────
+  # This is the single job to require in branch-protection rules. It passes only
+  # if every upstream required job succeeded — so a red scan blocks the PR merge.
+  security-gate:
+    name: Security Gate
+    runs-on: ubuntu-latest
+    permissions: {}
+    if: always()
+    needs:
+      - lint-and-sast
+      - unit-tests
+      - integration-tests
+      - dependency-scan
+      - iac-scan
+      - build-and-scan
+    steps:
+      - name: Verify all required checks passed
+        run: |
+          echo "lint-and-sast:      ${{ needs.lint-and-sast.result }}"
+          echo "unit-tests:         ${{ needs.unit-tests.result }}"
+          echo "integration-tests:  ${{ needs.integration-tests.result }}"
+          echo "dependency-scan:    ${{ needs.dependency-scan.result }}"
+          echo "iac-scan:           ${{ needs.iac-scan.result }}"
+          echo "build-and-scan:     ${{ needs.build-and-scan.result }}"
+          if [ "${{ needs.lint-and-sast.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.integration-tests.result }}" != "success" ] || \
+             [ "${{ needs.dependency-scan.result }}" != "success" ] || \
+             [ "${{ needs.iac-scan.result }}" != "success" ] || \
+             [ "${{ needs.build-and-scan.result }}" != "success" ]; then
+            echo "::error::Security gate FAILED — one or more required checks did not pass. Merge blocked."
+            exit 1
+          fi
+          echo "Security gate PASSED — safe to merge."
+
+  # ── 9. Deploy — runs ONLY after merge to main ──────────────────────────────
+  # Push image + apply Terraform against the real backend. Never runs on a PR,
+  # so untrusted PR code can't reach cloud credentials.
+  deploy:
+    name: Deploy — Push image + Terraform apply
+    runs-on: ubuntu-latest
+    needs: [security-gate, build-and-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+    permissions:
+      contents: read
+      packages: write # push image to GHCR
+      id-token: write # OIDC for azure/login
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build + push image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ${{ env.WORKING_DIR }}
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: Azure login (service principal)
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: Terraform init + apply
+        working-directory: ${{ env.WORKING_DIR }}/terraform
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_AZUREAD: "true"
+          TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_admin_object_id: ${{ secrets.AZURE_ADMIN_OBJECT_ID }}
+          TF_VAR_neo4j_uri: ${{ secrets.NEO4J_URI }}
+          TF_VAR_neo4j_password: ${{ secrets.NEO4J_PASSWORD }}
+        run: |
+          terraform init -input=false
+          terraform apply -auto-approve -input=false

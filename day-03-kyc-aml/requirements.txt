@@ -1,0 +1,37 @@
+azure-ai-agents>=1.1.0
+azure-identity>=1.19.0
+azure-keyvault-secrets>=4.9.0
+azure-monitor-opentelemetry>=1.8.8
+azure-search-documents>=11.5.0
+azure-ai-documentintelligence>=1.0.0
+openai>=1.0.0
+langchain>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
+langchain-text-splitters>=0.3.0
+neo4j>=5.24.0
+networkx>=3.3
+# Pinned <1.0.0: CVE-2026-45829 (PYSEC-2026-311) is a pre-auth RCE affecting
+# chromadb 1.0.0–1.5.9 with no fix released. We only use the embedded
+# PersistentClient (no HTTP server, no trust_remote_code), and the 0.5.x API we
+# call is unaffected. Revisit when a patched 1.x ships.
+chromadb>=0.5.0,<1.0.0
+unstructured[docx,pptx,md,html]>=0.15.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+pymupdf>=1.24.0
+beautifulsoup4>=4.12.0
+sentence-transformers>=3.0.0
+pandas>=2.2.0
+numpy>=1.26.0
+fastapi>=0.115.0
+# starlette pinned >=1.3.1: FastAPI's transitive dep. Fixes 3 HIGH CVEs Trivy
+# flags in 0.41.3 — CVE-2026-54283 (→1.3.1), CVE-2026-48818 (→1.1.0),
+# CVE-2025-62727 (→0.49.1). Explicit pin keeps resolution deterministic.
+starlette>=1.3.1
+uvicorn[standard]>=0.32.0
+pydantic>=2.10.0
+httpx>=0.28.0
+python-dotenv>=1.0.0
+opentelemetry-instrumentation-fastapi
