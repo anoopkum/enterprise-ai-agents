@@ -236,12 +236,15 @@ pytest tests/integration  # FastAPI app with a mocked orchestrator
 | Integration tests | **required** | `pytest` (mocked orchestrator, local fallbacks) |
 | SCA — dependencies | **required** | `pip-audit --strict` (Snyk advisory if `SNYK_TOKEN` set) |
 | IaC — Terraform | **required** | `fmt -check`, `validate`, `checkov` (`soft_fail: false`) |
-| Docker build + scan | **required** | `trivy` (fails on HIGH/CRITICAL, `exit-code: 1`) |
+| Docker build | **required** | image must build |
+| Trivy image scan | advisory¹ | `trivy` HIGH/CRITICAL → reports to code scanning (task #12) |
 | Terraform plan (PR) | advisory | config-only dry-run, no cloud creds |
 | **Security Gate** | **required aggregator** | fails unless every required job above is green |
 | Deploy | main-only | image push + `terraform apply` (never on a PR) |
 
 Checkov's dev-sandbox exceptions are documented in `terraform/.checkov.yaml` (each skip justified — it's the audit trail, not a blanket suppression).
+
+> ¹ **Trivy is temporarily advisory** (task #12). The image currently ships the full ML stack (torch, CUDA, transformers) — a large surface where new HIGH CVEs rotate in constantly. The scan still runs and uploads findings to code scanning; it's re-promoted to a hard gate once the runtime image is slimmed to only the API's runtime deps. The Docker *build* remains required.
 
 **Enforce the gate** — in *Settings → Branches → Branch protection rules* for `main`:
 
