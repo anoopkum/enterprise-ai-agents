@@ -18,7 +18,7 @@ class Config:
 
     # Azure AI Foundry
     ai_foundry_endpoint: str = field(default_factory=lambda: _get("AI_FOUNDRY_ENDPOINT"))
-    openai_deployment: str = field(default_factory=lambda: _get("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1"))
+    openai_deployment: str = field(default_factory=lambda: _get("AZURE_OPENAI_DEPLOYMENT", "gpt-4o"))
     embed_deployment: str = field(default_factory=lambda: _get("AZURE_OPENAI_EMBED_DEPLOYMENT", "text-embedding-3-large"))
 
     # Azure AI Search

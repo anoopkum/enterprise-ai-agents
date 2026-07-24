@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.6"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.12"
+    }
   }
 
   # Configure via `terraform init -backend-config=...` or set your own backend.
@@ -65,8 +69,11 @@ module "keyvault" {
   location            = var.location
   tags                = local.tags
   admin_object_id     = var.admin_object_id
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  is_production       = local.is_production
+  # The principal executing this apply (CI service principal or local user) —
+  # granted Secrets Officer so it can write the secrets below into the RBAC vault.
+  deployer_object_id = data.azurerm_client_config.current.object_id
+  tenant_id          = data.azurerm_client_config.current.tenant_id
+  is_production      = local.is_production
 }
 
 # ─── Azure AI Document Intelligence — OCR for scanned IDs / PDFs (the core ask) ───
@@ -76,7 +83,7 @@ module "doc_intelligence" {
   resource_group_name = azurerm_resource_group.main.name
   location            = var.location
   tags                = local.tags
-  key_vault_id        = module.keyvault.id
+  key_vault_id        = module.keyvault.secrets_key_vault_id
   is_production       = local.is_production
   sku_name            = var.doc_intelligence_sku
 }
@@ -88,19 +95,19 @@ module "search" {
   resource_group_name = azurerm_resource_group.main.name
   location            = var.location
   tags                = local.tags
-  key_vault_id        = module.keyvault.id
+  key_vault_id        = module.keyvault.secrets_key_vault_id
   is_production       = local.is_production
   sku                 = var.search_sku
 }
 
-# ─── Azure OpenAI — GPT-4.1 + text-embedding-3-large ───
+# ─── Azure OpenAI — GPT-4o + text-embedding-3-large ───
 module "openai" {
   source              = "./modules/openai"
   account_name        = "oai-${local.prefix}"
   resource_group_name = azurerm_resource_group.main.name
   location            = var.location
   tags                = local.tags
-  key_vault_id        = module.keyvault.id
+  key_vault_id        = module.keyvault.secrets_key_vault_id
   is_production       = local.is_production
 }
 
@@ -148,7 +155,7 @@ resource "azurerm_key_vault_secret" "neo4j_uri" {
   count        = var.neo4j_uri == "" ? 0 : 1
   name         = "neo4j-uri"
   value        = var.neo4j_uri
-  key_vault_id = module.keyvault.id
+  key_vault_id = module.keyvault.secrets_key_vault_id
   content_type = "endpoint-url"
 }
 
@@ -156,6 +163,6 @@ resource "azurerm_key_vault_secret" "neo4j_password" {
   count        = var.neo4j_password == "" ? 0 : 1
   name         = "neo4j-password"
   value        = var.neo4j_password
-  key_vault_id = module.keyvault.id
+  key_vault_id = module.keyvault.secrets_key_vault_id
   content_type = "password"
 }

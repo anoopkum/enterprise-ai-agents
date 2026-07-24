@@ -7,7 +7,7 @@ Pipeline per customer:
   3. Rerank (Azure semantic | cross-encoder | lexical) → top_k_rerank.
   4. Fuse in the AML rules that GraphRAG says apply to this customer's country
      (relationships the vector search alone would miss).
-  5. GPT-4.1 reasons over the fused context and returns a JSON compliance
+  5. GPT-4o reasons over the fused context and returns a JSON compliance
      assessment; a deterministic rule-based path covers the no-LLM case.
 
 Every citation the LLM is allowed to use is passed in retrieved_context, so the

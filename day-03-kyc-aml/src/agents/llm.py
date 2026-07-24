@@ -1,12 +1,12 @@
 """
-Shared LLM client for the KYC agents — Azure AI Foundry Agents SDK with GPT-4.1.
+Shared LLM client for the KYC agents — Azure AI Foundry Agents SDK with GPT-4o.
 
 complete_json() returns a parsed dict on success, or None when the LLM is
 unavailable / errors — the caller then uses its deterministic rule-based path.
 This is the same progressive-fallback contract used across Day 01/02, extracted
 here so the four KYC agents don't each re-implement the SDK boilerplate.
 
-GPT-4.1 is vision-enabled, so the same client handles both text reasoning and
+GPT-4o is vision-enabled, so the same client handles both text reasoning and
 (future) direct image analysis of scanned IDs.
 """
 import json

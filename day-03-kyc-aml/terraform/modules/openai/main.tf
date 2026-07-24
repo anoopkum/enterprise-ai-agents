@@ -1,4 +1,4 @@
-# Azure OpenAI — GPT-4.1 (reasoning, vision-enabled) + text-embedding-3-large.
+# Azure OpenAI — GPT-4o (reasoning, vision-enabled) + text-embedding-3-large.
 resource "azurerm_cognitive_account" "openai" {
   name                          = var.account_name
   resource_group_name           = var.resource_group_name
@@ -23,14 +23,14 @@ resource "azurerm_cognitive_account" "openai" {
   }
 }
 
-resource "azurerm_cognitive_deployment" "gpt41" {
+resource "azurerm_cognitive_deployment" "chat" {
   name                 = var.chat_deployment_name
   cognitive_account_id = azurerm_cognitive_account.openai.id
 
   model {
     format  = "OpenAI"
-    name    = "gpt-4.1"
-    version = var.gpt41_version
+    name    = var.chat_model_name
+    version = var.chat_model_version
   }
 
   # azurerm 4.x: the `scale` block was replaced by a `sku` block.
@@ -56,7 +56,7 @@ resource "azurerm_cognitive_deployment" "embeddings" {
   }
 
   # Deploy models one at a time — the account serialises deployment operations.
-  depends_on = [azurerm_cognitive_deployment.gpt41]
+  depends_on = [azurerm_cognitive_deployment.chat]
 }
 
 resource "azurerm_key_vault_secret" "openai_key" {

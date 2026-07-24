@@ -65,7 +65,7 @@ resource "azurerm_ai_foundry_project" "project" {
   location           = azurerm_ai_foundry.hub.location
   ai_services_hub_id = azurerm_ai_foundry.hub.id
   friendly_name      = "KYC/AML Compliance Agent"
-  description        = "Day 03 — KYC/AML compliance agent (GPT-4.1, AI Search, Document Intelligence, Neo4j)."
+  description        = "Day 03 — KYC/AML compliance agent (GPT-4o, AI Search, Document Intelligence, Neo4j)."
 
   identity {
     type = "SystemAssigned"

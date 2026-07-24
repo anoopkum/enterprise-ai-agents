@@ -15,7 +15,7 @@ variable "subscription_id" {
 }
 
 variable "location" {
-  description = "Azure region. GPT-4.1 + Document Intelligence must be available here."
+  description = "Azure region. GPT-4o + Document Intelligence must be available here."
   type        = string
   default     = "swedencentral"
 }
