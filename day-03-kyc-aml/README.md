@@ -30,7 +30,7 @@ Every cloud dependency is **optional**: with no Azure account and no Neo4j, the 
 │       │            │            │            │           │            │         │
 │   customer      documents,   PEP /       vector +     fuse into   hallucination │
 │   subgraph      OCR conf,    sanctions   graph rules  APPROVE/    check + PII +  │
-│   from Neo4j    expiry       screening   → GPT-4.1    EDD/REJECT  output policy  │
+│   from Neo4j    expiry       screening   → GPT-4o     EDD/REJECT  output policy  │
 │                              (graph)     (or rules)   + SAR                     │
 └───────────────────────────────────────────────────────────────────────────────┘
                                           │
@@ -47,7 +47,7 @@ Every cloud dependency is **optional**: with no Azure account and no Neo4j, the 
 
 | Layer | Technology |
 |---|---|
-| LLM (reasoning) | **Azure OpenAI GPT-4.1** via AI Foundry Agents SDK (rule-based fallback when endpoint unset) |
+| LLM (reasoning) | **Azure OpenAI GPT-4o** via AI Foundry Agents SDK (rule-based fallback when endpoint unset) |
 | Embeddings | `text-embedding-3-large` |
 | OCR | **Azure AI Document Intelligence** (FormRecognizer) → PyMuPDF fallback for scanned IDs/PDFs |
 | Vector store | **Azure AI Search** — hybrid (BM25 + vector) + semantic reranker → **ChromaDB** local fallback |
@@ -160,7 +160,7 @@ curl -s localhost:8000/health | jq
 | `AZURE_SEARCH_ENDPOINT` (+ key) | Azure AI Search (hybrid + semantic reranker) |
 | `NEO4J_URI` + `NEO4J_PASSWORD` | Neo4j Aura knowledge graph |
 | `DOC_INTELLIGENCE_ENDPOINT` (+ key) | Azure Document Intelligence OCR |
-| `AI_FOUNDRY_ENDPOINT` | GPT-4.1 reasoning (vs. rule-based fallback) |
+| `AI_FOUNDRY_ENDPOINT` | GPT-4o reasoning (vs. rule-based fallback) |
 
 No code changes — the capability flags in `config.py` route to the right backend based purely on which vars are present.
 
@@ -198,7 +198,7 @@ Everything lands in **one resource group** (`rg-kyc-aml-dev`), in `swedencentral
 - **Azure AI Foundry hub + project** — the workspace the KYC agent, model deployments, and service connections are scoped to (hub is backed by its own storage account + the shared Key Vault).
 - **Azure AI Document Intelligence** (FormRecognizer, S0) — OCR for scanned IDs/PDFs.
 - **Azure AI Search** (semantic SKU, system-assigned identity) — vector DB for the regulatory KB.
-- **Azure OpenAI** — `gpt-4.1` + `text-embedding-3-large` deployments.
+- **Azure OpenAI** — `gpt-4o` + `text-embedding-3-large` deployments.
 - **Key Vault** — stores every key + the Neo4j Aura URI/password as secrets.
 - **3 role assignments** — the Foundry hub's managed identity gets *Cognitive Services OpenAI User*, *Cognitive Services User*, and *Search Index Data Contributor* on the back-ends, so the agent authenticates keyless via Azure AD (requires *User Access Administrator* on the deploying principal).
 

@@ -67,7 +67,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="KYC/AML Compliance Agent API",
-    description="Multi-format RAG + knowledge-graph KYC/AML pipeline on Azure AI Foundry (GPT-4.1)",
+    description="Multi-format RAG + knowledge-graph KYC/AML pipeline on Azure AI Foundry (GPT-4o)",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs" if config.environment != "prod" else None,
