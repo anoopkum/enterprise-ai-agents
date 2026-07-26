@@ -21,7 +21,7 @@ class LLMClient:
     def __init__(self) -> None:
         self._client = None
         self._agents: dict[str, str] = {}
-        self._available = config.use_azure_openai
+        self._available = config.use_foundry_agents
 
     @property
     def available(self) -> bool:

@@ -1,4 +1,11 @@
-variable "account_name" { type = string }
+variable "account_name" {
+  description = "Foundry (AIServices) account name — also used as the custom subdomain (globally unique)."
+  type        = string
+}
+variable "project_name" {
+  description = "Foundry project name (child of the account)."
+  type        = string
+}
 variable "resource_group_name" { type = string }
 variable "location" { type = string }
 variable "tags" { type = map(string) }
@@ -11,7 +18,7 @@ variable "chat_deployment_name" {
   default     = "gpt-4o"
 }
 variable "chat_model_name" {
-  description = "Azure OpenAI chat model family."
+  description = "Chat model family."
   type        = string
   default     = "gpt-4o"
 }

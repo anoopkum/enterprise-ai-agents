@@ -47,7 +47,7 @@ Every cloud dependency is **optional**: with no Azure account and no Neo4j, the 
 
 | Layer | Technology |
 |---|---|
-| LLM (reasoning) | **Azure OpenAI GPT-4o** via AI Foundry Agents SDK (rule-based fallback when endpoint unset) |
+| LLM (reasoning) | **GPT-4o** on an Azure AI Foundry account, via the Agents SDK (rule-based fallback when endpoint unset) |
 | Embeddings | `text-embedding-3-large` |
 | OCR | **Azure AI Document Intelligence** (FormRecognizer) → PyMuPDF fallback for scanned IDs/PDFs |
 | Vector store | **Azure AI Search** — hybrid (BM25 + vector) + semantic reranker → **ChromaDB** local fallback |
@@ -56,7 +56,7 @@ Every cloud dependency is **optional**: with no Azure account and no Neo4j, the 
 | Orchestration | LangChain LCEL (`RunnableLambda` pipe chain) |
 | Guardrails | PII redaction, prompt-injection screening, NLI hallucination detection, output policy |
 | API | FastAPI + Pydantic v2, OpenTelemetry tracing |
-| Infrastructure | Terraform (AzureRM ~3.110) — Document Intelligence, AI Search, OpenAI, Key Vault |
+| Infrastructure | Terraform (AzureRM 4.81) — AI Foundry (models + project), Document Intelligence, AI Search, Key Vault |
 | CI/CD | GitHub Actions — lint/SAST, unit + integration tests, SCA, IaC scan, Trivy, TF plan |
 | Runtime | Azure Container Apps (system-assigned MI for Key Vault + ACR) |
 
@@ -160,7 +160,7 @@ curl -s localhost:8000/health | jq
 | `AZURE_SEARCH_ENDPOINT` (+ key) | Azure AI Search (hybrid + semantic reranker) |
 | `NEO4J_URI` + `NEO4J_PASSWORD` | Neo4j Aura knowledge graph |
 | `DOC_INTELLIGENCE_ENDPOINT` (+ key) | Azure Document Intelligence OCR |
-| `AI_FOUNDRY_ENDPOINT` | GPT-4o reasoning (vs. rule-based fallback) |
+| `AI_FOUNDRY_ENDPOINT` (project) + `AZURE_OPENAI_ENDPOINT` (account) | GPT-4o reasoning + embeddings (vs. rule-based / local fallback) |
 
 No code changes — the capability flags in `config.py` route to the right backend based purely on which vars are present.
 
@@ -195,14 +195,13 @@ terraform apply
 
 Everything lands in **one resource group** (`rg-kyc-aml-dev`), in `swedencentral` by default:
 
-- **Azure AI Foundry hub + project** — the workspace the KYC agent, model deployments, and service connections are scoped to (hub is backed by its own storage account + the shared Key Vault).
+- **Azure AI Foundry (FDP)** — one `kind=AIServices` account (`project_management_enabled`) that both **hosts the model deployments** (`gpt-4o` + `text-embedding-3-large`) **and contains the project** (agents/threads). No separate Azure OpenAI resource, no classic hub, no backing storage account — the models are deployed on the same account the project lives in, so no cross-resource connection is needed.
 - **Azure AI Document Intelligence** (FormRecognizer, S0) — OCR for scanned IDs/PDFs.
 - **Azure AI Search** (semantic SKU, system-assigned identity) — vector DB for the regulatory KB.
-- **Azure OpenAI** — `gpt-4o` + `text-embedding-3-large` deployments.
 - **Key Vault** — stores every key + the Neo4j Aura URI/password as secrets.
-- **3 role assignments** — the Foundry hub's managed identity gets *Cognitive Services OpenAI User*, *Cognitive Services User*, and *Search Index Data Contributor* on the back-ends, so the agent authenticates keyless via Azure AD (requires *User Access Administrator* on the deploying principal).
+- **2 role assignments** — the Foundry account's managed identity gets *Cognitive Services User* (Document Intelligence) and *Search Index Data Contributor* (AI Search) so the agent authenticates keyless via Azure AD (requires *User Access Administrator* on the deploying principal). No OpenAI role is needed — the models are local to the account.
 
-`terraform plan` against live Azure = **21 to add, 0 to change, 0 to destroy**. Neo4j Aura itself is managed and billed separately by Neo4j; Terraform only stores its connection secrets.
+Neo4j Aura itself is managed and billed separately by Neo4j; Terraform only stores its connection secrets.
 
 ---
 
@@ -269,7 +268,7 @@ day-03-kyc-aml/
 │   ├── eval/          # RAGAS-style decision + hallucination harness
 │   ├── api/           # FastAPI app, Pydantic models, rate-limit middleware
 │   └── config.py      # capability flags → progressive fallback
-├── terraform/         # Document Intelligence, AI Search, OpenAI, Key Vault modules
+├── terraform/         # AI Foundry (models + project), Document Intelligence, AI Search, Key Vault modules
 ├── tests/             # unit + integration
 ├── Dockerfile
 └── requirements*.txt

@@ -12,34 +12,34 @@ output "search_endpoint" {
   value       = module.search.endpoint
 }
 
-output "openai_endpoint" {
-  description = "Set AI_FOUNDRY_ENDPOINT to this value."
-  value       = module.openai.endpoint
+output "azure_openai_endpoint" {
+  description = "Set AZURE_OPENAI_ENDPOINT to this value (embeddings client)."
+  value       = module.foundry.account_endpoint
+}
+
+output "ai_foundry_project_endpoint" {
+  description = "Set AI_FOUNDRY_ENDPOINT to this value (Agents SDK)."
+  value       = module.foundry.project_endpoint
 }
 
 output "openai_chat_deployment" {
-  value = module.openai.chat_deployment
+  value = module.foundry.chat_deployment
 }
 
 output "openai_embed_deployment" {
-  value = module.openai.embed_deployment
+  value = module.foundry.embed_deployment
 }
 
 output "key_vault_name" {
   value = module.keyvault.name
 }
 
-output "ai_foundry_hub_name" {
-  value = module.ai_foundry.hub_name
+output "ai_foundry_account_name" {
+  value = module.foundry.account_name
 }
 
 output "ai_foundry_project_name" {
-  value = module.ai_foundry.project_name
-}
-
-output "ai_foundry_hub_discovery_url" {
-  description = "Foundry hub discovery URL — set as AI_FOUNDRY_ENDPOINT / project connection."
-  value       = module.ai_foundry.hub_discovery_url
+  value = module.foundry.project_name
 }
 
 output "estimated_monthly_cost" {
