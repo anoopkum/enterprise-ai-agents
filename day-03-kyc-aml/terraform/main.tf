@@ -6,10 +6,6 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "4.81.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.6"
-    }
     time = {
       source  = "hashicorp/time"
       version = "~> 0.12"
@@ -42,15 +38,6 @@ provider "azurerm" {
 }
 
 data "azurerm_client_config" "current" {}
-
-# Suffix for globally-unique names (storage account).
-resource "random_string" "suffix" {
-  length  = 6
-  lower   = true
-  upper   = false
-  numeric = true
-  special = false
-}
 
 resource "azurerm_resource_group" "main" {
   name     = "rg-${local.prefix}"
@@ -100,10 +87,14 @@ module "search" {
   sku                 = var.search_sku
 }
 
-# ─── Azure OpenAI — GPT-4o + text-embedding-3-large ───
-module "openai" {
-  source              = "./modules/openai"
-  account_name        = "oai-${local.prefix}"
+# ─── Azure AI Foundry (FDP) — one AIServices account that hosts the models AND
+# contains the project. Replaces the old split of a standalone Azure OpenAI resource
+# + a classic AI Foundry hub + a backing storage account. GPT-4o + embeddings are
+# deployed ON this account, so no cross-resource connection is needed. ───
+module "foundry" {
+  source              = "./modules/foundry"
+  account_name        = "aif-${local.prefix}"
+  project_name        = "proj-${local.prefix}"
   resource_group_name = azurerm_resource_group.main.name
   location            = var.location
   tags                = local.tags
@@ -111,42 +102,19 @@ module "openai" {
   is_production       = local.is_production
 }
 
-# ─── Azure AI Foundry — Hub + Project (central AI workspace for the KYC agent) ───
-# The hub owns a storage account + Key Vault; the project scopes the agent, model
-# deployments, and connections to Search / OpenAI / Document Intelligence.
-module "ai_foundry" {
-  source              = "./modules/ai_foundry"
-  name                = "aih-${local.prefix}"
-  project_name        = "proj-${local.prefix}"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = var.location
-  tags                = local.tags
-  key_vault_id        = module.keyvault.id
-  is_production       = local.is_production
-
-  # Storage account: 3-24 lowercase alphanumeric, globally unique.
-  storage_account_name = substr("st${replace(local.prefix, "-", "")}${random_string.suffix.result}", 0, 24)
-}
-
-# ─── Grant the Foundry hub identity access to the AI back-ends (keyless auth) ───
-# The hub's system-assigned identity calls OpenAI, Document Intelligence, and Search
-# via Azure AD instead of stored keys — the managed-identity path the app uses in prod.
-resource "azurerm_role_assignment" "foundry_to_openai" {
-  scope                = module.openai.id
-  role_definition_name = "Cognitive Services OpenAI User"
-  principal_id         = module.ai_foundry.hub_principal_id
-}
-
+# ─── Grant the Foundry account identity access to the external back-ends (keyless) ───
+# The models live on the Foundry account itself, so no OpenAI role is needed here.
+# Document Intelligence and Search are separate resources the agent calls via Azure AD.
 resource "azurerm_role_assignment" "foundry_to_docintel" {
   scope                = module.doc_intelligence.id
   role_definition_name = "Cognitive Services User"
-  principal_id         = module.ai_foundry.hub_principal_id
+  principal_id         = module.foundry.account_principal_id
 }
 
 resource "azurerm_role_assignment" "foundry_to_search" {
   scope                = module.search.id
   role_definition_name = "Search Index Data Contributor"
-  principal_id         = module.ai_foundry.hub_principal_id
+  principal_id         = module.foundry.account_principal_id
 }
 
 # ─── Neo4j Aura (knowledge graph) is a managed SaaS provisioned outside Terraform.

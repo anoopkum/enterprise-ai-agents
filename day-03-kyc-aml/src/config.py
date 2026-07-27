@@ -16,8 +16,14 @@ def _get(key: str, default: str = "") -> str:
 class Config:
     data_dir: str = field(default_factory=lambda: _get("DATA_DIR", "data"))
 
-    # Azure AI Foundry
+    # Azure AI Foundry (single AIServices account hosts the models AND the project).
+    # Two endpoints on the SAME resource:
+    #   ai_foundry_endpoint  → Foundry PROJECT endpoint for the Agents SDK
+    #     (https://<resource>.services.ai.azure.com/api/projects/<project>)
+    #   azure_openai_endpoint → account's OpenAI-compatible endpoint for embeddings
+    #     (https://<resource>.cognitiveservices.azure.com/)
     ai_foundry_endpoint: str = field(default_factory=lambda: _get("AI_FOUNDRY_ENDPOINT"))
+    azure_openai_endpoint: str = field(default_factory=lambda: _get("AZURE_OPENAI_ENDPOINT"))
     openai_deployment: str = field(default_factory=lambda: _get("AZURE_OPENAI_DEPLOYMENT", "gpt-4o"))
     embed_deployment: str = field(default_factory=lambda: _get("AZURE_OPENAI_EMBED_DEPLOYMENT", "text-embedding-3-large"))
 
@@ -69,6 +75,12 @@ class Config:
 
     @property
     def use_azure_openai(self) -> bool:
+        """Embeddings via the account's OpenAI-compatible endpoint."""
+        return bool(self.azure_openai_endpoint)
+
+    @property
+    def use_foundry_agents(self) -> bool:
+        """Chat reasoning via the Foundry project (Agents SDK)."""
         return bool(self.ai_foundry_endpoint)
 
 

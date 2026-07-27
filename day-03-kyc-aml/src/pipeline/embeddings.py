@@ -28,7 +28,7 @@ class Embedder:
                 DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"
             )
             self._client = AzureOpenAI(
-                azure_endpoint=config.ai_foundry_endpoint,
+                azure_endpoint=config.azure_openai_endpoint,
                 azure_ad_token_provider=token_provider,
                 api_version="2024-10-21",
             )
