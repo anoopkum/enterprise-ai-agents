@@ -56,9 +56,9 @@ Every cloud dependency is **optional**: with no Azure account and no Neo4j, the 
 | Orchestration | LangChain LCEL (`RunnableLambda` pipe chain) |
 | Guardrails | PII redaction, prompt-injection screening, NLI hallucination detection, output policy |
 | API | FastAPI + Pydantic v2, OpenTelemetry tracing |
-| Infrastructure | Terraform (AzureRM 4.81) — AI Foundry (models + project), Document Intelligence, AI Search, Key Vault |
+| Infrastructure | Terraform (AzureRM 4.81) — AI Foundry (models + project), Document Intelligence, AI Search, Key Vault, ACR, Container Apps |
 | CI/CD | GitHub Actions — lint/SAST, unit + integration tests, SCA, IaC scan, Trivy, TF plan |
-| Runtime | Azure Container Apps (system-assigned MI for Key Vault + ACR) |
+| Runtime | Azure Container Apps (system-assigned MI — keyless to Foundry, Search, Doc Intelligence; Key Vault refs for Neo4j) |
 
 ---
 
@@ -199,7 +199,23 @@ Everything lands in **one resource group** (`rg-kyc-aml-dev`), in `swedencentral
 - **Azure AI Document Intelligence** (FormRecognizer, S0) — OCR for scanned IDs/PDFs.
 - **Azure AI Search** (semantic SKU, system-assigned identity) — vector DB for the regulatory KB.
 - **Key Vault** — stores every key + the Neo4j Aura URI/password as secrets.
-- **2 role assignments** — the Foundry account's managed identity gets *Cognitive Services User* (Document Intelligence) and *Search Index Data Contributor* (AI Search) so the agent authenticates keyless via Azure AD (requires *User Access Administrator* on the deploying principal). No OpenAI role is needed — the models are local to the account.
+- **Azure Container Registry** (Basic dev / Premium prod, no admin user) — holds the runtime image; the Container App pulls it keyless via *AcrPull*.
+- **Azure Container Apps** — runs the FastAPI service (ingress `:8000`, system-assigned MI, scale-to-zero in dev). Provisioned as a shell; the deploy job sets the real image + env + Neo4j Key Vault refs (see below).
+
+**Role assignments — all on the *Container App's* managed identity** (it's the runtime caller: `embeddings.py`, `vector_store.py`, `ocr.py` use `DefaultAzureCredential`, and `llm.py` drives the Agents SDK):
+
+| Role | Scope | Why |
+|---|---|---|
+| AcrPull | ACR | pull the private image |
+| Key Vault Secrets User | Key Vault | resolve the Neo4j URI/password references |
+| Cognitive Services OpenAI User | Foundry account | embeddings (account OpenAI endpoint) |
+| Azure AI User (Foundry User) | Foundry account | create/run agents (project endpoint) |
+| Search Index Data Contributor | AI Search | hybrid retrieval on the KB index |
+| Cognitive Services User | Document Intelligence | OCR |
+
+Keyless throughout (requires *User Access Administrator* on the deploying principal). Only Neo4j — a Neo4j-managed SaaS with no Azure AD path — is reached via a Key Vault secret.
+
+**Bootstrap ordering.** The app's identity doesn't exist until the app is created, but every role above targets that identity — so at first-create the app can't yet pull a private image or read a KV secret. Terraform therefore provisions the app as a **shell** (placeholder image, `ignore_changes` on template/registry/secret); the deploy job then pushes the image to ACR and rolls out the real image + env + KV secret refs via `az containerapp` **after** the grants propagate.
 
 Neo4j Aura itself is managed and billed separately by Neo4j; Terraform only stores its connection secrets.
 
@@ -239,7 +255,7 @@ pytest tests/integration  # FastAPI app with a mocked orchestrator
 | Trivy image scan | advisory¹ | `trivy` HIGH/CRITICAL → reports to code scanning (task #12) |
 | Terraform plan (PR) | advisory | config-only dry-run, no cloud creds |
 | **Security Gate** | **required aggregator** | fails unless every required job above is green |
-| Deploy | main-only | image push + `terraform apply` (never on a PR) |
+| Deploy | main-only | `terraform apply` → push image to ACR → roll out image + env onto Container App + `/health` smoke test (never on a PR) |
 
 Checkov's dev-sandbox exceptions are documented in `terraform/.checkov.yaml` (each skip justified — it's the audit trail, not a blanket suppression).
 
@@ -268,7 +284,7 @@ day-03-kyc-aml/
 │   ├── eval/          # RAGAS-style decision + hallucination harness
 │   ├── api/           # FastAPI app, Pydantic models, rate-limit middleware
 │   └── config.py      # capability flags → progressive fallback
-├── terraform/         # AI Foundry (models + project), Document Intelligence, AI Search, Key Vault modules
+├── terraform/         # AI Foundry (models + project), Document Intelligence, AI Search, Key Vault, ACR, Container Apps modules
 ├── tests/             # unit + integration
 ├── Dockerfile
 └── requirements*.txt
