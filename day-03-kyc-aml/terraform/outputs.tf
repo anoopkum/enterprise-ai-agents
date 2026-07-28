@@ -34,6 +34,21 @@ output "key_vault_name" {
   value = module.keyvault.name
 }
 
+output "container_app_name" {
+  description = "Container App name — the deploy step targets this with `az containerapp update`."
+  value       = module.containerapp.name
+}
+
+output "container_app_url" {
+  description = "Public HTTPS endpoint of the KYC/AML API."
+  value       = module.containerapp.url
+}
+
+output "acr_login_server" {
+  description = "ACR login server — the deploy step pushes the runtime image here."
+  value       = module.acr.login_server
+}
+
 output "ai_foundry_account_name" {
   value = module.foundry.account_name
 }

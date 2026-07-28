@@ -385,42 +385,29 @@ jobs:
           echo "Security gate PASSED — safe to merge."
 
   # ── 9. Deploy — runs ONLY after merge to main ──────────────────────────────
-  # Push image + apply Terraform against the real backend. Never runs on a PR,
-  # so untrusted PR code can't reach cloud credentials.
+  # Terraform apply → push image to ACR → roll the image + runtime config onto the
+  # Container App. Never runs on a PR, so untrusted PR code can't reach cloud
+  # credentials. The image + env + KV secret refs are set out-of-band by the CLI
+  # (steps 3–5), NOT by Terraform — the app module ignore_changes those fields, so
+  # apply and the CLI never fight over the app's template/registry/secret.
   deploy:
-    name: Deploy — Push image + Terraform apply
+    name: Deploy — Terraform apply + roll out image
     runs-on: ubuntu-latest
     needs: [security-gate, build-and-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: staging
     permissions:
       contents: read
-      packages: write # push image to GHCR
       id-token: write # OIDC for azure/login
+    env:
+      # 'true'/'false' — comparing the secret to '' is not itself secret. Lets the
+      # Neo4j wiring below no-op cleanly when no Aura instance is configured.
+      HAS_NEO4J: ${{ secrets.NEO4J_URI != '' }}
     defaults:
       run:
         working-directory: ${{ env.WORKING_DIR }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-
-      - name: Build + push image
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: ${{ env.WORKING_DIR }}
-          push: true
-          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
@@ -437,7 +424,11 @@ jobs:
               "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
             }
 
+      # 1) Provision/refresh infra: ACR, Foundry, Search, Doc Intelligence, Key
+      #    Vault, the Container App SHELL, and the app-identity role grants (AcrPull,
+      #    KV Secrets User, Cognitive/Search/Foundry). Outputs feed the CLI steps.
       - name: Terraform init + apply
+        id: tf
         working-directory: ${{ env.WORKING_DIR }}/terraform
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -452,3 +443,118 @@ jobs:
         run: |
           terraform init -input=false
           terraform apply -auto-approve -input=false
+          {
+            echo "acr_login_server=$(terraform output -raw acr_login_server)"
+            echo "container_app=$(terraform output -raw container_app_name)"
+            echo "resource_group=$(terraform output -raw resource_group_name)"
+            echo "key_vault=$(terraform output -raw key_vault_name)"
+            echo "ai_foundry_endpoint=$(terraform output -raw ai_foundry_project_endpoint)"
+            echo "azure_openai_endpoint=$(terraform output -raw azure_openai_endpoint)"
+            echo "search_endpoint=$(terraform output -raw search_endpoint)"
+            echo "doc_intelligence_endpoint=$(terraform output -raw doc_intelligence_endpoint)"
+          } >> "$GITHUB_OUTPUT"
+
+      # 2) Build + push the runtime image to ACR. `az acr login` mints an AAD token
+      #    into the docker cred store (the SP has push rights via its subscription
+      #    role) — no admin user, no stored registry password.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build + push image to ACR
+        id: img
+        run: |
+          ACR="${{ steps.tf.outputs.acr_login_server }}"
+          az acr login --name "${ACR%%.*}"
+          echo "image=$ACR/kyc-aml" >> "$GITHUB_OUTPUT"
+
+      - name: Push image (buildx + gha cache)
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: ${{ env.WORKING_DIR }}
+          push: true
+          tags: ${{ steps.img.outputs.image }}:latest,${{ steps.img.outputs.image }}:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3) Bind the registry to the app's system identity (AcrPull granted in TF).
+      #    The apply + image build above give the role time to propagate.
+      - name: Wire ACR pull via managed identity
+        run: |
+          az containerapp registry set \
+            --name ${{ steps.tf.outputs.container_app }} \
+            --resource-group ${{ steps.tf.outputs.resource_group }} \
+            --server ${{ steps.tf.outputs.acr_login_server }} \
+            --identity system \
+            --output none
+
+      # 4) Neo4j is the ONLY non-AAD dependency → its URI/password are Key Vault
+      #    references resolved by the app's system identity (KV Secrets User granted
+      #    in TF). Search / Doc Intelligence / Foundry are all keyless via MI, so
+      #    they need no secret. No-op when no Aura instance is configured.
+      - name: Set Neo4j Key Vault secret references
+        if: env.HAS_NEO4J == 'true'
+        run: |
+          KV="${{ steps.tf.outputs.key_vault }}"
+          az containerapp secret set \
+            --name ${{ steps.tf.outputs.container_app }} \
+            --resource-group ${{ steps.tf.outputs.resource_group }} \
+            --secrets \
+              "neo4j-uri=keyvaultref:https://$KV.vault.azure.net/secrets/neo4j-uri,identityref:system" \
+              "neo4j-password=keyvaultref:https://$KV.vault.azure.net/secrets/neo4j-password,identityref:system" \
+            --output none
+
+      # 5) Set the real image (by digest) + runtime env. Two Foundry endpoints on
+      #    the ONE account: AI_FOUNDRY_ENDPOINT (project → Agents SDK, chat) and
+      #    AZURE_OPENAI_ENDPOINT (account → embeddings). Everything else falls back
+      #    to code defaults; Neo4j env points at the secret refs from step 4.
+      - name: Roll out image + runtime env
+        run: |
+          ENV_VARS=(
+            "AI_FOUNDRY_ENDPOINT=${{ steps.tf.outputs.ai_foundry_endpoint }}"
+            "AZURE_OPENAI_ENDPOINT=${{ steps.tf.outputs.azure_openai_endpoint }}"
+            "AZURE_OPENAI_DEPLOYMENT=gpt-4o"
+            "AZURE_OPENAI_EMBED_DEPLOYMENT=text-embedding-3-large"
+            "AZURE_SEARCH_ENDPOINT=${{ steps.tf.outputs.search_endpoint }}"
+            "AZURE_SEARCH_INDEX=kyc-regulatory-kb"
+            "DOC_INTELLIGENCE_ENDPOINT=${{ steps.tf.outputs.doc_intelligence_endpoint }}"
+            "ENVIRONMENT=dev"
+          )
+          if [ "$HAS_NEO4J" = "true" ]; then
+            ENV_VARS+=( "NEO4J_URI=secretref:neo4j-uri" "NEO4J_USER=neo4j" "NEO4J_PASSWORD=secretref:neo4j-password" )
+          fi
+          az containerapp update \
+            --name ${{ steps.tf.outputs.container_app }} \
+            --resource-group ${{ steps.tf.outputs.resource_group }} \
+            --image ${{ steps.img.outputs.image }}@${{ steps.build.outputs.digest }} \
+            --set-env-vars "${ENV_VARS[@]}" \
+            --output table
+
+      # 6) Wait for the new revision to go live, then smoke-test /health.
+      - name: Wait for active revision + smoke test
+        run: |
+          APP=${{ steps.tf.outputs.container_app }}
+          RG=${{ steps.tf.outputs.resource_group }}
+          for i in $(seq 1 20); do
+            STATE=$(az containerapp revision list --name "$APP" --resource-group "$RG" \
+              --query "[?properties.active].properties.runningState | [0]" -o tsv 2>/dev/null || echo "Waiting")
+            echo "[$i/20] revision state: $STATE"
+            [ "$STATE" = "Running" ] && break
+            sleep 15
+          done
+          FQDN=$(az containerapp show --name "$APP" --resource-group "$RG" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "App URL: https://$FQDN"
+          curl --fail --retry 6 --retry-delay 10 --retry-all-errors "https://$FQDN/health"
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Deploy — staging"
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Container App | \`${{ steps.tf.outputs.container_app }}\` |"
+            echo "| Image | \`${{ steps.img.outputs.image }}@${{ steps.build.outputs.digest }}\` |"
+            echo "| SHA | \`${{ github.sha }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

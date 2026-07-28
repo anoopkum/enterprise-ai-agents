@@ -102,19 +102,82 @@ module "foundry" {
   is_production       = local.is_production
 }
 
-# ─── Grant the Foundry account identity access to the external back-ends (keyless) ───
-# The models live on the Foundry account itself, so no OpenAI role is needed here.
-# Document Intelligence and Search are separate resources the agent calls via Azure AD.
-resource "azurerm_role_assignment" "foundry_to_docintel" {
-  scope                = module.doc_intelligence.id
-  role_definition_name = "Cognitive Services User"
-  principal_id         = module.foundry.account_principal_id
+# ─── Azure Container Registry — holds the KYC/AML runtime image ───
+# The deploy workflow pushes the built image here; the Container App pulls it
+# keyless via its managed identity (AcrPull below). No admin credentials.
+module "acr" {
+  source              = "./modules/acr"
+  name                = "acr${substr(replace(local.prefix, "-", ""), 0, 47)}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  tags                = local.tags
+  is_production       = local.is_production
 }
 
-resource "azurerm_role_assignment" "foundry_to_search" {
+# ─── Azure Container Apps — runs the FastAPI KYC/AML service ───
+# Provisioned as a shell (placeholder image); the deploy workflow sets the real
+# image + env + Neo4j KV-reference secrets via `az containerapp` after the role
+# assignments below propagate. See modules/containerapp for the ordering rationale.
+module "containerapp" {
+  source              = "./modules/containerapp"
+  env_name            = "cae-${local.prefix}"
+  app_name            = "ca-${local.prefix}"
+  resource_group_name = azurerm_resource_group.main.name
+  location            = var.location
+  tags                = local.tags
+  is_production       = local.is_production
+}
+
+# ─── Role assignments — the app's managed identity authenticates keyless to every
+# back-end. Grants live on the CONTAINER APP's identity because the app is the
+# runtime caller: embeddings.py, vector_store.py and ocr.py all use
+# DefaultAzureCredential from inside the container, and llm.py drives the Foundry
+# Agents SDK against the project endpoint. ───
+
+# Pull the private image from ACR.
+resource "azurerm_role_assignment" "ca_to_acr" {
+  scope                = module.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = module.containerapp.principal_id
+}
+
+# Read the Neo4j URI/password Key Vault references (the only non-AAD dependency).
+resource "azurerm_role_assignment" "ca_to_kv" {
+  scope                = module.keyvault.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = module.containerapp.principal_id
+}
+
+# Embeddings — the AzureOpenAI client hits the account's OpenAI endpoint
+# (…cognitiveservices.azure.com) with the cognitiveservices token scope.
+resource "azurerm_role_assignment" "ca_to_foundry_openai" {
+  scope                = module.foundry.id
+  role_definition_name = "Cognitive Services OpenAI User"
+  principal_id         = module.containerapp.principal_id
+}
+
+# Chat/reasoning — the Agents SDK creates and runs agents against the Foundry
+# PROJECT endpoint. "Azure AI User" (a.k.a. Foundry User) is the data-plane role
+# for creating and interacting with agents. Pinned by GUID because the role was
+# renamed (Azure AI User → Foundry User) and the display name is mid-rollout.
+resource "azurerm_role_assignment" "ca_to_foundry_agents" {
+  scope              = module.foundry.id
+  role_definition_id = "/subscriptions/${var.subscription_id}/providers/Microsoft.Authorization/roleDefinitions/53ca6127-db72-4b80-b1b0-d745d6d5456d"
+  principal_id       = module.containerapp.principal_id
+}
+
+# Search — hybrid retrieval reads/writes the regulatory-KB index via Azure AD.
+resource "azurerm_role_assignment" "ca_to_search" {
   scope                = module.search.id
   role_definition_name = "Search Index Data Contributor"
-  principal_id         = module.foundry.account_principal_id
+  principal_id         = module.containerapp.principal_id
+}
+
+# Document Intelligence — OCR for scanned IDs/PDFs via Azure AD.
+resource "azurerm_role_assignment" "ca_to_docintel" {
+  scope                = module.doc_intelligence.id
+  role_definition_name = "Cognitive Services User"
+  principal_id         = module.containerapp.principal_id
 }
 
 # ─── Neo4j Aura (knowledge graph) is a managed SaaS provisioned outside Terraform.

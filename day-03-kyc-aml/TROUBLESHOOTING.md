@@ -94,6 +94,45 @@ Both point at the *same* Foundry account but are **not interchangeable**. Set th
 
 ---
 
+## Container App bootstrap — the image/secrets can't be declared in Terraform
+
+**Symptom (would-be):** Declaring the real image, the ACR `registry {}` block, or Key Vault `secret {}` references directly on `azurerm_container_app` fails on the **first** apply — the app can't pull a private image or read a KV secret because the roles that permit it don't exist yet.
+
+**Cause — a hard ordering cycle.** Every role the app needs (`AcrPull` to pull, `Key Vault Secrets User` to resolve a KV reference, the Cognitive/Search roles) is granted to the app identity's `principal_id`. That principal **does not exist until the app is created**. So the app must be created *before* its roles — meaning at create time it has none of them. A private-image pull or KV-secret resolution in that same apply therefore 403s.
+
+**Fix — the shell + CLI pattern (cloned from Day 01/02):** Terraform provisions the app as a **shell**: a public placeholder image (`containerapps-helloworld`), no registry, no secrets, and `lifecycle { ignore_changes = [template, ingress, registry, secret, identity] }`. The deploy workflow then, **after** `terraform apply` has created the identity and its role grants (and the image build has given them ~1 min to propagate), runs:
+- `az containerapp registry set --identity system` — bind ACR pull to the MI,
+- `az containerapp secret set --secrets "…=keyvaultref:<uri>,identityref:system"` — the Neo4j KV references,
+- `az containerapp update --image <acr>/kyc-aml@<digest> --set-env-vars …` — the real image + runtime env.
+
+`ignore_changes` is what stops the next `terraform apply` from reverting the CLI's image/registry/secret back to the placeholder. (`system`-identity KV references specifically **cannot** be set at `az containerapp create` time either — MS docs note the system identity isn't available until after creation — which is the same cycle, and the same reason we set them post-provision.)
+
+**Reuse for future days:** Any day that runs its own image on Container Apps with MI-based ACR/KV access needs this shell-in-Terraform + wire-with-CLI split. Don't try to declare the image + registry + KV secret in one apply.
+
+---
+
+## `azurerm_container_registry` — `retention_policy` block removed in azurerm 4.x
+
+**Symptom:** `terraform validate` fails with `Blocks of type "retention_policy" are not expected here` when cloning the Day-02 ACR module (which targets azurerm 3.x) into Day-03 (pinned to **4.81**).
+
+**Cause:** In azurerm 4.x the nested `retention_policy { days, enabled }` block on `azurerm_container_registry` was replaced by a single top-level attribute, **`retention_policy_in_days`** (Premium SKU only).
+
+**Fix:** `retention_policy_in_days = var.is_production ? 7 : null` (null = unset on the Basic dev SKU). `georeplications` remains a block. Watch for the same 3.x→4.x block-to-attribute flattening on other resources when copying modules across days.
+
+---
+
+## Role assignments belonged on the wrong principal
+
+**Symptom (latent):** The pre-Container-App code granted `Cognitive Services User` (Doc Intelligence) and `Search Index Data Contributor` (Search) to the **Foundry account's** managed identity. That's the wrong principal — those calls would 403 at runtime once a real host existed.
+
+**Cause:** The app calls Search and Document Intelligence *itself* — `vector_store.py` and `ocr.py` both authenticate with `DefaultAzureCredential` from inside the container. So the **Container App's** MI is the caller, not the Foundry account's. (The Foundry account only needs to reach its *own* deployed models, which are local to it — no cross-resource grant.)
+
+**Fix:** When the Container App landed, all six role assignments were (re)pointed at `module.containerapp.principal_id`: `AcrPull`, `Key Vault Secrets User`, `Cognitive Services OpenAI User` (embeddings, account endpoint), `Azure AI User` (agents, project endpoint — pinned by GUID `53ca6127-…` because the role was renamed Azure AI User → *Foundry User* mid-rollout), `Search Index Data Contributor`, and `Cognitive Services User`.
+
+**Reuse for future days:** Grant back-end roles to whichever identity actually makes the SDK call. For a keyless app that is the Container App's MI — not the model host's.
+
+---
+
 ## `ruff` CI drift — rules change between minor versions
 
 **Symptom:** The `lint-and-sast` job flags (or stops flagging) code with no source change — CI is non-deterministic across runs as the runner picks up a newer ruff.
@@ -201,7 +240,7 @@ Retrying the merge blindly on the exit-1 will then error with "already merged."
 
 ## Known gaps (not failures — tracked follow-ups)
 
-1. **No compute host in Terraform — the pushed image does not run in Azure.** The Terraform modules are `foundry`, `doc_intelligence`, `keyvault`, `search` only. There is **no** `container_app` / `app_service` / `web_app` resource. CI builds and pushes `ghcr.io/anoopkum/enterprise-ai-agents/kyc-aml:latest`, but nothing in Azure pulls or runs it. The README's "Runtime: Azure Container Apps (system-assigned MI...)" describes an intended target that isn't provisioned yet. **To close:** add a `container_app` module (Container Apps Environment + Container App with system-assigned MI, ingress on port 8000, secrets wired from Key Vault via MI), grant that MI `Cognitive Services OpenAI User` (on the Foundry account) + `Search Index Data Contributor` + Key Vault Secrets User, and add a deploy step that sets the image. (Day-02 has a working Container App reference to copy.)
+1. **~~No compute host in Terraform~~ — RESOLVED.** Added `modules/acr` (Azure Container Registry) + `modules/containerapp` (Log Analytics + Container Apps Environment + Container App, system-assigned MI, ingress `:8000`). The app's identity is granted `AcrPull`, `Key Vault Secrets User`, `Cognitive Services OpenAI User` + `Azure AI User` (Foundry account), `Search Index Data Contributor`, and `Cognitive Services User`. The deploy job now runs `terraform apply` → push image to ACR → `az containerapp` sets the real image + the two Foundry endpoints + Neo4j KV secret refs → `/health` smoke test. See the two footguns documented below (bootstrap ordering; role principal).
 2. **Trivy re-promotion to REQUIRED** — needs the slim multi-stage runtime image first (task #12 above).
 3. **SonarCloud medium hotspots** — pip `--only-binary`/hash-lock (`S8541`/`S8544`) deferred to a lockfile PR. (The TF `S6378` storage-account `identity {}` hotspot is **no longer applicable** — the backing storage account was removed in the Foundry consolidation above.)
 4. **`main` is unprotected** — enable branch protection with "Security Gate" as a required status check (operator action in GitHub settings; the aggregator job exists but isn't enforced).
