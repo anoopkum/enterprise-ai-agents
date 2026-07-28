@@ -68,6 +68,19 @@ class TestHealth:
         assert body["components"]["vector_store"] == "chromadb"
         assert body["components"]["graph_store"] == "neo4j"
 
+    def test_health_degraded_when_graph_unavailable(self, client):
+        # An unreachable optional backend (e.g. a paused Neo4j Aura instance)
+        # must degrade the probe, not 500 it.
+        c, mock = client
+        mock.health_check.return_value = {
+            "vector_store": "azure_search",
+            "graph_store": "neo4j",
+            "graph_stats": {"backend": "neo4j", "status": "unavailable", "error": "DNS resolve failed"},
+        }
+        resp = c.get("/health")
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "degraded"
+
 
 @pytest.mark.integration
 class TestScreen:
