@@ -81,11 +81,19 @@ class KYCOrchestrator:
         return result
 
     def health_check(self) -> dict[str, Any]:
-        return {
+        # A liveness probe must not fail because an optional backend is down.
+        # graph_store.stats() is the only network call here (a live Neo4j query);
+        # if the graph is unreachable, report it degraded rather than raising.
+        components: dict[str, Any] = {
             "vector_store": vector_store.backend,
             "graph_store": graph_store.backend,
-            "graph_stats": graph_store.stats(),
         }
+        try:
+            components["graph_stats"] = graph_store.stats()
+        except Exception as exc:
+            logger.warning("Graph stats unavailable: %s", exc)
+            components["graph_stats"] = {"backend": graph_store.backend, "status": "unavailable", "error": str(exc)}
+        return components
 
 
 orchestrator = KYCOrchestrator()

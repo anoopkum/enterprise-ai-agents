@@ -9,6 +9,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -85,9 +86,15 @@ app.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
 
 @app.get("/health")
 async def health():
-    info = {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+    # Liveness: always 200 while the process is up. Optional backends (e.g. an
+    # idle Neo4j Aura instance) surface as status="degraded" in the body rather
+    # than failing the probe, so a paused dependency can't wedge the deploy gate.
+    info: dict[str, Any] = {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
     if _orchestrator:
-        info["components"] = _orchestrator.health_check()
+        components = _orchestrator.health_check()
+        info["components"] = components
+        if any(isinstance(v, dict) and v.get("status") == "unavailable" for v in components.values()):
+            info["status"] = "degraded"
     return info
 
 
