@@ -1,0 +1,20 @@
+{
+  "file": "New York Brochure.pdf",
+  "model_id": "prebuilt-layout",
+  "content_chars": 1458,
+  "page_count": 1,
+  "table_count": 0,
+  "mean_word_confidence": 0.9929,
+  "pages": [
+    {
+      "page_number": 1,
+      "width": 8.2639,
+      "height": 11.6806,
+      "unit": "inch",
+      "line_count": 36,
+      "word_count": 239,
+      "mean_word_confidence": 0.9929
+    }
+  ],
+  "tables": []
+}

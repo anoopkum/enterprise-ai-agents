@@ -1,0 +1,20 @@
+{
+  "file": "Dubai Brochure.pdf",
+  "model_id": "prebuilt-layout",
+  "content_chars": 984,
+  "page_count": 1,
+  "table_count": 0,
+  "mean_word_confidence": 0.995,
+  "pages": [
+    {
+      "page_number": 1,
+      "width": 8.2639,
+      "height": 11.6806,
+      "unit": "inch",
+      "line_count": 26,
+      "word_count": 158,
+      "mean_word_confidence": 0.995
+    }
+  ],
+  "tables": []
+}
