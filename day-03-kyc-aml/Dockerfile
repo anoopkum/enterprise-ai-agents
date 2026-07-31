@@ -21,6 +21,12 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 # stay on a mounted volume / external store; regulatory KB is seeded at startup.
 COPY --chown=appuser:appgroup src/ ./src/
 
+# PII-FREE regulatory KB subset only (aml_rules + kyc_guidelines, synthetic rules/
+# guidelines with no personal data). This is what the startup seed embeds into the
+# vector index. Real customer data / documents are NEVER copied here.
+COPY --chown=appuser:appgroup data/sample_synthetic/ ./data/
+ENV DATA_DIR=/app/data
+
 USER appuser
 
 EXPOSE 8000

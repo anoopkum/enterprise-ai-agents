@@ -1,0 +1,501 @@
+RuleID,RuleTitle,RuleCategory,RuleText,Country,Priority,Version
+AML_00001,EDD Rule 1,EDD,Beneficial ownership verification is required for business accounts.,UK,Critical,v1.0
+AML_00002,ONBOARDING Rule 2,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,USA,Medium,v5.0
+AML_00003,COUNTRY_RISK Rule 3,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,UK,Medium,v5.0
+AML_00004,ONBOARDING Rule 4,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,Global,Low,v1.0
+AML_00005,SANCTION Rule 5,SANCTION,Beneficial ownership verification is required for business accounts.,Global,Medium,v3.0
+AML_00006,EDD Rule 6,EDD,Address proof must be verified during onboarding.,UK,Low,v4.0
+AML_00007,COUNTRY_RISK Rule 7,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,USA,Critical,v2.0
+AML_00008,ONBOARDING Rule 8,ONBOARDING,Beneficial ownership verification is required for business accounts.,UK,Critical,v1.0
+AML_00009,COUNTRY_RISK Rule 9,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,Low,v5.0
+AML_00010,SANCTION Rule 10,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,India,High,v5.0
+AML_00011,CDD Rule 11,CDD,Identity verification must be completed before account activation.,Global,Critical,v1.0
+AML_00012,CDD Rule 12,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,Low,v1.0
+AML_00013,ONBOARDING Rule 13,ONBOARDING,Customers from high-risk countries require additional verification.,UK,High,v3.0
+AML_00014,COUNTRY_RISK Rule 14,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,High,v1.0
+AML_00015,ONBOARDING Rule 15,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,India,Medium,v3.0
+AML_00016,COUNTRY_RISK Rule 16,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,Critical,v4.0
+AML_00017,COUNTRY_RISK Rule 17,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,Global,Critical,v5.0
+AML_00018,ONBOARDING Rule 18,ONBOARDING,Identity verification must be completed before account activation.,Global,Critical,v4.0
+AML_00019,EDD Rule 19,EDD,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v2.0
+AML_00020,EDD Rule 20,EDD,Identity verification must be completed before account activation.,India,Critical,v1.0
+AML_00021,AML Rule 21,AML,Beneficial ownership verification is required for business accounts.,UK,Low,v4.0
+AML_00022,EDD Rule 22,EDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v1.0
+AML_00023,CDD Rule 23,CDD,Customers appearing on sanctions lists must be rejected immediately.,USA,High,v1.0
+AML_00024,AML Rule 24,AML,Customers from high-risk countries require additional verification.,Global,Medium,v5.0
+AML_00025,CDD Rule 25,CDD,Identity verification must be completed before account activation.,India,High,v2.0
+AML_00026,AML Rule 26,AML,Source of funds verification is mandatory for high-value customers.,India,Low,v3.0
+AML_00027,SANCTION Rule 27,SANCTION,Customers with incomplete documentation must be placed under manual review.,India,Medium,v5.0
+AML_00028,EDD Rule 28,EDD,Suspicious activity reports must be filed for unusual behavior.,USA,High,v4.0
+AML_00029,EDD Rule 29,EDD,Customers with incomplete documentation must be placed under manual review.,India,High,v3.0
+AML_00030,AML Rule 30,AML,Address proof must be verified during onboarding.,USA,Medium,v1.0
+AML_00031,PEP Rule 31,PEP,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Low,v5.0
+AML_00032,PEP Rule 32,PEP,Identity verification must be completed before account activation.,USA,Low,v5.0
+AML_00033,AML Rule 33,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,High,v1.0
+AML_00034,AML Rule 34,AML,Beneficial ownership verification is required for business accounts.,UK,Critical,v3.0
+AML_00035,AML Rule 35,AML,Suspicious activity reports must be filed for unusual behavior.,India,Low,v3.0
+AML_00036,ONBOARDING Rule 36,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,UK,Low,v2.0
+AML_00037,PEP Rule 37,PEP,Customers from high-risk countries require additional verification.,UK,Medium,v4.0
+AML_00038,EDD Rule 38,EDD,Customers from high-risk countries require additional verification.,India,Low,v3.0
+AML_00039,COUNTRY_RISK Rule 39,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,UK,Medium,v2.0
+AML_00040,COUNTRY_RISK Rule 40,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,UK,Medium,v2.0
+AML_00041,PEP Rule 41,PEP,Beneficial ownership verification is required for business accounts.,India,Low,v3.0
+AML_00042,SANCTION Rule 42,SANCTION,Beneficial ownership verification is required for business accounts.,USA,Critical,v1.0
+AML_00043,COUNTRY_RISK Rule 43,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,Global,Low,v1.0
+AML_00044,PEP Rule 44,PEP,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Critical,v5.0
+AML_00045,CDD Rule 45,CDD,Suspicious activity reports must be filed for unusual behavior.,India,Critical,v5.0
+AML_00046,PEP Rule 46,PEP,Beneficial ownership verification is required for business accounts.,Global,Low,v5.0
+AML_00047,PEP Rule 47,PEP,Suspicious activity reports must be filed for unusual behavior.,UK,Critical,v2.0
+AML_00048,EDD Rule 48,EDD,Suspicious activity reports must be filed for unusual behavior.,Global,Critical,v2.0
+AML_00049,SANCTION Rule 49,SANCTION,Customers with incomplete documentation must be placed under manual review.,UK,High,v1.0
+AML_00050,PEP Rule 50,PEP,Source of funds verification is mandatory for high-value customers.,Global,Medium,v4.0
+AML_00051,CDD Rule 51,CDD,Identity verification must be completed before account activation.,Global,High,v4.0
+AML_00052,AML Rule 52,AML,Source of funds verification is mandatory for high-value customers.,UK,Low,v1.0
+AML_00053,AML Rule 53,AML,Customers from high-risk countries require additional verification.,UK,Low,v5.0
+AML_00054,ONBOARDING Rule 54,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,USA,Critical,v1.0
+AML_00055,AML Rule 55,AML,Beneficial ownership verification is required for business accounts.,India,High,v1.0
+AML_00056,PEP Rule 56,PEP,Beneficial ownership verification is required for business accounts.,Global,Critical,v5.0
+AML_00057,COUNTRY_RISK Rule 57,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,UK,Critical,v2.0
+AML_00058,SANCTION Rule 58,SANCTION,Customers from high-risk countries require additional verification.,UK,Low,v2.0
+AML_00059,PEP Rule 59,PEP,Identity verification must be completed before account activation.,USA,Low,v2.0
+AML_00060,SANCTION Rule 60,SANCTION,Suspicious activity reports must be filed for unusual behavior.,India,Low,v1.0
+AML_00061,PEP Rule 61,PEP,Suspicious activity reports must be filed for unusual behavior.,USA,High,v4.0
+AML_00062,PEP Rule 62,PEP,Beneficial ownership verification is required for business accounts.,Global,Critical,v5.0
+AML_00063,ONBOARDING Rule 63,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,UK,Medium,v3.0
+AML_00064,PEP Rule 64,PEP,Transactions inconsistent with customer profile should trigger AML review.,UK,Critical,v4.0
+AML_00065,ONBOARDING Rule 65,ONBOARDING,Beneficial ownership verification is required for business accounts.,India,Medium,v3.0
+AML_00066,ONBOARDING Rule 66,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,High,v4.0
+AML_00067,EDD Rule 67,EDD,Customers with incomplete documentation must be placed under manual review.,USA,High,v1.0
+AML_00068,COUNTRY_RISK Rule 68,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,Low,v1.0
+AML_00069,CDD Rule 69,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v5.0
+AML_00070,EDD Rule 70,EDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Medium,v5.0
+AML_00071,ONBOARDING Rule 71,ONBOARDING,Source of funds verification is mandatory for high-value customers.,UK,Medium,v3.0
+AML_00072,CDD Rule 72,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Critical,v4.0
+AML_00073,SANCTION Rule 73,SANCTION,Customers with incomplete documentation must be placed under manual review.,USA,High,v2.0
+AML_00074,PEP Rule 74,PEP,Customers with incomplete documentation must be placed under manual review.,India,Low,v3.0
+AML_00075,AML Rule 75,AML,Beneficial ownership verification is required for business accounts.,UK,Low,v3.0
+AML_00076,COUNTRY_RISK Rule 76,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,India,Medium,v5.0
+AML_00077,PEP Rule 77,PEP,Customers appearing on sanctions lists must be rejected immediately.,USA,Low,v4.0
+AML_00078,CDD Rule 78,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,High,v2.0
+AML_00079,COUNTRY_RISK Rule 79,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,Global,Medium,v2.0
+AML_00080,PEP Rule 80,PEP,Customers appearing on sanctions lists must be rejected immediately.,India,Critical,v3.0
+AML_00081,SANCTION Rule 81,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,UK,High,v5.0
+AML_00082,SANCTION Rule 82,SANCTION,Customers from high-risk countries require additional verification.,UK,High,v1.0
+AML_00083,CDD Rule 83,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,High,v2.0
+AML_00084,PEP Rule 84,PEP,Address proof must be verified during onboarding.,UK,Critical,v5.0
+AML_00085,ONBOARDING Rule 85,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v2.0
+AML_00086,EDD Rule 86,EDD,Source of funds verification is mandatory for high-value customers.,Global,Critical,v3.0
+AML_00087,ONBOARDING Rule 87,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,UK,High,v5.0
+AML_00088,ONBOARDING Rule 88,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v1.0
+AML_00089,PEP Rule 89,PEP,Customers from high-risk countries require additional verification.,India,Medium,v4.0
+AML_00090,COUNTRY_RISK Rule 90,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,USA,Critical,v2.0
+AML_00091,COUNTRY_RISK Rule 91,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,India,Low,v1.0
+AML_00092,SANCTION Rule 92,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,UK,Medium,v2.0
+AML_00093,EDD Rule 93,EDD,Transactions inconsistent with customer profile should trigger AML review.,India,Critical,v1.0
+AML_00094,AML Rule 94,AML,Customers with incomplete documentation must be placed under manual review.,India,High,v1.0
+AML_00095,AML Rule 95,AML,Transactions inconsistent with customer profile should trigger AML review.,India,Medium,v4.0
+AML_00096,ONBOARDING Rule 96,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,India,Critical,v5.0
+AML_00097,EDD Rule 97,EDD,Identity verification must be completed before account activation.,USA,Low,v3.0
+AML_00098,PEP Rule 98,PEP,Address proof must be verified during onboarding.,USA,Medium,v1.0
+AML_00099,ONBOARDING Rule 99,ONBOARDING,Beneficial ownership verification is required for business accounts.,Global,High,v4.0
+AML_00100,EDD Rule 100,EDD,Customers from high-risk countries require additional verification.,Global,Medium,v1.0
+AML_00101,CDD Rule 101,CDD,Suspicious activity reports must be filed for unusual behavior.,Global,Low,v1.0
+AML_00102,AML Rule 102,AML,Customers from high-risk countries require additional verification.,USA,Low,v2.0
+AML_00103,ONBOARDING Rule 103,ONBOARDING,Address proof must be verified during onboarding.,India,Critical,v4.0
+AML_00104,AML Rule 104,AML,Address proof must be verified during onboarding.,Global,Medium,v5.0
+AML_00105,AML Rule 105,AML,Suspicious activity reports must be filed for unusual behavior.,India,High,v5.0
+AML_00106,EDD Rule 106,EDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Critical,v4.0
+AML_00107,SANCTION Rule 107,SANCTION,Customers with incomplete documentation must be placed under manual review.,India,Medium,v3.0
+AML_00108,COUNTRY_RISK Rule 108,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,Medium,v2.0
+AML_00109,PEP Rule 109,PEP,Address proof must be verified during onboarding.,UK,Low,v1.0
+AML_00110,EDD Rule 110,EDD,Identity verification must be completed before account activation.,India,Low,v4.0
+AML_00111,PEP Rule 111,PEP,Identity verification must be completed before account activation.,UK,High,v5.0
+AML_00112,SANCTION Rule 112,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,USA,Low,v5.0
+AML_00113,PEP Rule 113,PEP,Identity verification must be completed before account activation.,UK,Low,v5.0
+AML_00114,PEP Rule 114,PEP,Customers with incomplete documentation must be placed under manual review.,Global,Medium,v3.0
+AML_00115,CDD Rule 115,CDD,Beneficial ownership verification is required for business accounts.,USA,Low,v2.0
+AML_00116,COUNTRY_RISK Rule 116,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,India,Medium,v2.0
+AML_00117,EDD Rule 117,EDD,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v5.0
+AML_00118,EDD Rule 118,EDD,Source of funds verification is mandatory for high-value customers.,UK,Low,v5.0
+AML_00119,ONBOARDING Rule 119,ONBOARDING,Address proof must be verified during onboarding.,Global,Low,v2.0
+AML_00120,CDD Rule 120,CDD,Customers with incomplete documentation must be placed under manual review.,India,Medium,v5.0
+AML_00121,SANCTION Rule 121,SANCTION,Identity verification must be completed before account activation.,UK,Low,v1.0
+AML_00122,AML Rule 122,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,High,v2.0
+AML_00123,AML Rule 123,AML,Transactions inconsistent with customer profile should trigger AML review.,Global,Medium,v2.0
+AML_00124,CDD Rule 124,CDD,Suspicious activity reports must be filed for unusual behavior.,UK,Low,v4.0
+AML_00125,CDD Rule 125,CDD,Source of funds verification is mandatory for high-value customers.,USA,High,v3.0
+AML_00126,PEP Rule 126,PEP,Transactions inconsistent with customer profile should trigger AML review.,India,Critical,v1.0
+AML_00127,ONBOARDING Rule 127,ONBOARDING,Address proof must be verified during onboarding.,UK,Critical,v2.0
+AML_00128,AML Rule 128,AML,Suspicious activity reports must be filed for unusual behavior.,UK,Low,v1.0
+AML_00129,AML Rule 129,AML,Identity verification must be completed before account activation.,UK,High,v5.0
+AML_00130,SANCTION Rule 130,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v5.0
+AML_00131,ONBOARDING Rule 131,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,USA,High,v5.0
+AML_00132,PEP Rule 132,PEP,Identity verification must be completed before account activation.,USA,Medium,v5.0
+AML_00133,AML Rule 133,AML,Suspicious activity reports must be filed for unusual behavior.,India,Low,v4.0
+AML_00134,PEP Rule 134,PEP,Customers from high-risk countries require additional verification.,USA,Medium,v5.0
+AML_00135,ONBOARDING Rule 135,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,High,v5.0
+AML_00136,AML Rule 136,AML,Source of funds verification is mandatory for high-value customers.,USA,Medium,v5.0
+AML_00137,PEP Rule 137,PEP,Address proof must be verified during onboarding.,UK,Low,v5.0
+AML_00138,SANCTION Rule 138,SANCTION,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,High,v2.0
+AML_00139,SANCTION Rule 139,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,USA,Medium,v1.0
+AML_00140,COUNTRY_RISK Rule 140,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,Critical,v5.0
+AML_00141,ONBOARDING Rule 141,ONBOARDING,Customers from high-risk countries require additional verification.,UK,High,v4.0
+AML_00142,ONBOARDING Rule 142,ONBOARDING,Beneficial ownership verification is required for business accounts.,Global,High,v4.0
+AML_00143,AML Rule 143,AML,Transactions inconsistent with customer profile should trigger AML review.,India,Critical,v3.0
+AML_00144,PEP Rule 144,PEP,Source of funds verification is mandatory for high-value customers.,Global,Medium,v3.0
+AML_00145,PEP Rule 145,PEP,Beneficial ownership verification is required for business accounts.,UK,Critical,v3.0
+AML_00146,SANCTION Rule 146,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v3.0
+AML_00147,EDD Rule 147,EDD,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v1.0
+AML_00148,PEP Rule 148,PEP,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,High,v3.0
+AML_00149,PEP Rule 149,PEP,Customers appearing on sanctions lists must be rejected immediately.,UK,High,v3.0
+AML_00150,CDD Rule 150,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Medium,v5.0
+AML_00151,AML Rule 151,AML,Address proof must be verified during onboarding.,India,High,v3.0
+AML_00152,SANCTION Rule 152,SANCTION,Customers with incomplete documentation must be placed under manual review.,India,Low,v5.0
+AML_00153,AML Rule 153,AML,Beneficial ownership verification is required for business accounts.,India,Medium,v5.0
+AML_00154,EDD Rule 154,EDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,Critical,v5.0
+AML_00155,SANCTION Rule 155,SANCTION,Beneficial ownership verification is required for business accounts.,USA,Medium,v3.0
+AML_00156,SANCTION Rule 156,SANCTION,Customers from high-risk countries require additional verification.,UK,Critical,v1.0
+AML_00157,AML Rule 157,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Low,v4.0
+AML_00158,SANCTION Rule 158,SANCTION,Customers with incomplete documentation must be placed under manual review.,UK,High,v2.0
+AML_00159,CDD Rule 159,CDD,Address proof must be verified during onboarding.,Global,Low,v5.0
+AML_00160,PEP Rule 160,PEP,Customers with incomplete documentation must be placed under manual review.,UK,High,v1.0
+AML_00161,SANCTION Rule 161,SANCTION,Source of funds verification is mandatory for high-value customers.,USA,Low,v3.0
+AML_00162,AML Rule 162,AML,Beneficial ownership verification is required for business accounts.,Global,High,v2.0
+AML_00163,ONBOARDING Rule 163,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,India,Low,v3.0
+AML_00164,AML Rule 164,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,High,v2.0
+AML_00165,PEP Rule 165,PEP,Beneficial ownership verification is required for business accounts.,Global,Medium,v2.0
+AML_00166,AML Rule 166,AML,Customers appearing on sanctions lists must be rejected immediately.,India,High,v1.0
+AML_00167,EDD Rule 167,EDD,Address proof must be verified during onboarding.,UK,Low,v2.0
+AML_00168,AML Rule 168,AML,Identity verification must be completed before account activation.,UK,Critical,v1.0
+AML_00169,CDD Rule 169,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Medium,v5.0
+AML_00170,SANCTION Rule 170,SANCTION,Suspicious activity reports must be filed for unusual behavior.,UK,Critical,v2.0
+AML_00171,EDD Rule 171,EDD,Source of funds verification is mandatory for high-value customers.,India,Low,v3.0
+AML_00172,PEP Rule 172,PEP,Identity verification must be completed before account activation.,USA,Critical,v5.0
+AML_00173,CDD Rule 173,CDD,Address proof must be verified during onboarding.,India,Critical,v2.0
+AML_00174,PEP Rule 174,PEP,Customers from high-risk countries require additional verification.,UK,Medium,v2.0
+AML_00175,COUNTRY_RISK Rule 175,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,Global,Critical,v2.0
+AML_00176,EDD Rule 176,EDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,Low,v5.0
+AML_00177,COUNTRY_RISK Rule 177,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,India,Critical,v2.0
+AML_00178,EDD Rule 178,EDD,Suspicious activity reports must be filed for unusual behavior.,UK,Medium,v5.0
+AML_00179,AML Rule 179,AML,Identity verification must be completed before account activation.,UK,Medium,v4.0
+AML_00180,PEP Rule 180,PEP,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Critical,v3.0
+AML_00181,COUNTRY_RISK Rule 181,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,UK,High,v3.0
+AML_00182,ONBOARDING Rule 182,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,Global,High,v4.0
+AML_00183,CDD Rule 183,CDD,Transactions inconsistent with customer profile should trigger AML review.,USA,High,v3.0
+AML_00184,COUNTRY_RISK Rule 184,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,Medium,v4.0
+AML_00185,EDD Rule 185,EDD,Customers from high-risk countries require additional verification.,USA,High,v2.0
+AML_00186,COUNTRY_RISK Rule 186,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,UK,High,v2.0
+AML_00187,COUNTRY_RISK Rule 187,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,Critical,v5.0
+AML_00188,COUNTRY_RISK Rule 188,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,High,v4.0
+AML_00189,ONBOARDING Rule 189,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,UK,Medium,v4.0
+AML_00190,PEP Rule 190,PEP,Identity verification must be completed before account activation.,India,High,v3.0
+AML_00191,SANCTION Rule 191,SANCTION,Identity verification must be completed before account activation.,Global,High,v4.0
+AML_00192,EDD Rule 192,EDD,Identity verification must be completed before account activation.,Global,Critical,v2.0
+AML_00193,AML Rule 193,AML,Identity verification must be completed before account activation.,India,Medium,v2.0
+AML_00194,AML Rule 194,AML,Transactions inconsistent with customer profile should trigger AML review.,Global,Critical,v4.0
+AML_00195,AML Rule 195,AML,Customers from high-risk countries require additional verification.,USA,Critical,v5.0
+AML_00196,SANCTION Rule 196,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v4.0
+AML_00197,PEP Rule 197,PEP,Suspicious activity reports must be filed for unusual behavior.,USA,High,v4.0
+AML_00198,EDD Rule 198,EDD,Suspicious activity reports must be filed for unusual behavior.,India,Critical,v4.0
+AML_00199,ONBOARDING Rule 199,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,UK,High,v2.0
+AML_00200,EDD Rule 200,EDD,Beneficial ownership verification is required for business accounts.,USA,Low,v1.0
+AML_00201,EDD Rule 201,EDD,Suspicious activity reports must be filed for unusual behavior.,India,Medium,v4.0
+AML_00202,AML Rule 202,AML,Transactions inconsistent with customer profile should trigger AML review.,UK,Low,v2.0
+AML_00203,EDD Rule 203,EDD,Address proof must be verified during onboarding.,India,Medium,v5.0
+AML_00204,SANCTION Rule 204,SANCTION,Customers with incomplete documentation must be placed under manual review.,USA,Low,v5.0
+AML_00205,EDD Rule 205,EDD,Customers with incomplete documentation must be placed under manual review.,USA,Critical,v4.0
+AML_00206,EDD Rule 206,EDD,Address proof must be verified during onboarding.,UK,High,v2.0
+AML_00207,ONBOARDING Rule 207,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,Global,Medium,v2.0
+AML_00208,PEP Rule 208,PEP,Customers from high-risk countries require additional verification.,Global,Medium,v5.0
+AML_00209,EDD Rule 209,EDD,Customers from high-risk countries require additional verification.,India,High,v3.0
+AML_00210,EDD Rule 210,EDD,Customers appearing on sanctions lists must be rejected immediately.,USA,Medium,v5.0
+AML_00211,SANCTION Rule 211,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,USA,High,v2.0
+AML_00212,PEP Rule 212,PEP,Customers with incomplete documentation must be placed under manual review.,USA,High,v1.0
+AML_00213,SANCTION Rule 213,SANCTION,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,Critical,v1.0
+AML_00214,EDD Rule 214,EDD,Source of funds verification is mandatory for high-value customers.,USA,Medium,v3.0
+AML_00215,CDD Rule 215,CDD,Customers with incomplete documentation must be placed under manual review.,UK,Critical,v3.0
+AML_00216,AML Rule 216,AML,Transactions inconsistent with customer profile should trigger AML review.,UK,Critical,v3.0
+AML_00217,ONBOARDING Rule 217,ONBOARDING,Customers from high-risk countries require additional verification.,USA,Low,v3.0
+AML_00218,AML Rule 218,AML,Transactions inconsistent with customer profile should trigger AML review.,USA,Critical,v4.0
+AML_00219,ONBOARDING Rule 219,ONBOARDING,Address proof must be verified during onboarding.,Global,High,v5.0
+AML_00220,PEP Rule 220,PEP,Customers appearing on sanctions lists must be rejected immediately.,India,Medium,v1.0
+AML_00221,CDD Rule 221,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Low,v3.0
+AML_00222,PEP Rule 222,PEP,Customers from high-risk countries require additional verification.,UK,Medium,v1.0
+AML_00223,PEP Rule 223,PEP,Suspicious activity reports must be filed for unusual behavior.,Global,Low,v3.0
+AML_00224,AML Rule 224,AML,Source of funds verification is mandatory for high-value customers.,UK,High,v5.0
+AML_00225,PEP Rule 225,PEP,Identity verification must be completed before account activation.,USA,Medium,v2.0
+AML_00226,PEP Rule 226,PEP,Customers from high-risk countries require additional verification.,India,Critical,v2.0
+AML_00227,EDD Rule 227,EDD,Customers from high-risk countries require additional verification.,Global,Medium,v5.0
+AML_00228,PEP Rule 228,PEP,Suspicious activity reports must be filed for unusual behavior.,India,Critical,v2.0
+AML_00229,AML Rule 229,AML,Source of funds verification is mandatory for high-value customers.,Global,Medium,v5.0
+AML_00230,EDD Rule 230,EDD,Customers from high-risk countries require additional verification.,India,Medium,v3.0
+AML_00231,SANCTION Rule 231,SANCTION,Source of funds verification is mandatory for high-value customers.,UK,Medium,v2.0
+AML_00232,COUNTRY_RISK Rule 232,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,USA,Medium,v5.0
+AML_00233,COUNTRY_RISK Rule 233,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,Critical,v2.0
+AML_00234,AML Rule 234,AML,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v4.0
+AML_00235,COUNTRY_RISK Rule 235,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,India,Medium,v2.0
+AML_00236,ONBOARDING Rule 236,ONBOARDING,Customers appearing on sanctions lists must be rejected immediately.,UK,Medium,v5.0
+AML_00237,ONBOARDING Rule 237,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,India,Medium,v4.0
+AML_00238,PEP Rule 238,PEP,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v3.0
+AML_00239,EDD Rule 239,EDD,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v2.0
+AML_00240,CDD Rule 240,CDD,Customers with incomplete documentation must be placed under manual review.,Global,High,v5.0
+AML_00241,AML Rule 241,AML,Customers appearing on sanctions lists must be rejected immediately.,UK,High,v2.0
+AML_00242,ONBOARDING Rule 242,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v2.0
+AML_00243,PEP Rule 243,PEP,Customers from high-risk countries require additional verification.,UK,Medium,v2.0
+AML_00244,CDD Rule 244,CDD,Identity verification must be completed before account activation.,UK,High,v4.0
+AML_00245,EDD Rule 245,EDD,Source of funds verification is mandatory for high-value customers.,Global,High,v4.0
+AML_00246,AML Rule 246,AML,Transactions inconsistent with customer profile should trigger AML review.,USA,Medium,v4.0
+AML_00247,COUNTRY_RISK Rule 247,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,India,Critical,v3.0
+AML_00248,SANCTION Rule 248,SANCTION,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,Critical,v5.0
+AML_00249,CDD Rule 249,CDD,Transactions inconsistent with customer profile should trigger AML review.,India,Medium,v1.0
+AML_00250,AML Rule 250,AML,Customers with incomplete documentation must be placed under manual review.,India,High,v4.0
+AML_00251,AML Rule 251,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,Low,v2.0
+AML_00252,CDD Rule 252,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v2.0
+AML_00253,CDD Rule 253,CDD,Identity verification must be completed before account activation.,UK,Medium,v5.0
+AML_00254,COUNTRY_RISK Rule 254,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,Global,Medium,v1.0
+AML_00255,ONBOARDING Rule 255,ONBOARDING,Address proof must be verified during onboarding.,India,Low,v2.0
+AML_00256,PEP Rule 256,PEP,Customers appearing on sanctions lists must be rejected immediately.,Global,High,v3.0
+AML_00257,ONBOARDING Rule 257,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,Medium,v3.0
+AML_00258,PEP Rule 258,PEP,Beneficial ownership verification is required for business accounts.,UK,High,v2.0
+AML_00259,EDD Rule 259,EDD,Customers with incomplete documentation must be placed under manual review.,UK,High,v5.0
+AML_00260,COUNTRY_RISK Rule 260,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,UK,Medium,v3.0
+AML_00261,ONBOARDING Rule 261,ONBOARDING,Address proof must be verified during onboarding.,USA,Medium,v3.0
+AML_00262,COUNTRY_RISK Rule 262,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,High,v3.0
+AML_00263,SANCTION Rule 263,SANCTION,Identity verification must be completed before account activation.,India,Critical,v5.0
+AML_00264,ONBOARDING Rule 264,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,India,High,v5.0
+AML_00265,CDD Rule 265,CDD,Identity verification must be completed before account activation.,India,Medium,v2.0
+AML_00266,COUNTRY_RISK Rule 266,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,Global,Critical,v3.0
+AML_00267,COUNTRY_RISK Rule 267,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,USA,Critical,v1.0
+AML_00268,CDD Rule 268,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Low,v5.0
+AML_00269,EDD Rule 269,EDD,Suspicious activity reports must be filed for unusual behavior.,Global,Critical,v4.0
+AML_00270,ONBOARDING Rule 270,ONBOARDING,Customers from high-risk countries require additional verification.,USA,High,v4.0
+AML_00271,SANCTION Rule 271,SANCTION,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v4.0
+AML_00272,EDD Rule 272,EDD,Suspicious activity reports must be filed for unusual behavior.,UK,Low,v4.0
+AML_00273,CDD Rule 273,CDD,Address proof must be verified during onboarding.,UK,Low,v2.0
+AML_00274,SANCTION Rule 274,SANCTION,Source of funds verification is mandatory for high-value customers.,UK,Medium,v2.0
+AML_00275,ONBOARDING Rule 275,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,USA,Low,v3.0
+AML_00276,ONBOARDING Rule 276,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Critical,v4.0
+AML_00277,AML Rule 277,AML,Source of funds verification is mandatory for high-value customers.,India,High,v5.0
+AML_00278,ONBOARDING Rule 278,ONBOARDING,Customers appearing on sanctions lists must be rejected immediately.,India,Low,v5.0
+AML_00279,AML Rule 279,AML,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,Low,v1.0
+AML_00280,AML Rule 280,AML,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v5.0
+AML_00281,COUNTRY_RISK Rule 281,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,Critical,v1.0
+AML_00282,SANCTION Rule 282,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,UK,Medium,v5.0
+AML_00283,CDD Rule 283,CDD,Customers with incomplete documentation must be placed under manual review.,UK,Critical,v2.0
+AML_00284,EDD Rule 284,EDD,Identity verification must be completed before account activation.,USA,Critical,v4.0
+AML_00285,EDD Rule 285,EDD,Customers from high-risk countries require additional verification.,UK,Critical,v4.0
+AML_00286,COUNTRY_RISK Rule 286,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,USA,High,v1.0
+AML_00287,PEP Rule 287,PEP,Beneficial ownership verification is required for business accounts.,UK,Critical,v5.0
+AML_00288,CDD Rule 288,CDD,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v3.0
+AML_00289,CDD Rule 289,CDD,Transactions inconsistent with customer profile should trigger AML review.,USA,Critical,v1.0
+AML_00290,EDD Rule 290,EDD,Suspicious activity reports must be filed for unusual behavior.,India,High,v1.0
+AML_00291,SANCTION Rule 291,SANCTION,Customers from high-risk countries require additional verification.,USA,Low,v3.0
+AML_00292,EDD Rule 292,EDD,Customers from high-risk countries require additional verification.,USA,Low,v3.0
+AML_00293,COUNTRY_RISK Rule 293,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,Global,Low,v3.0
+AML_00294,COUNTRY_RISK Rule 294,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,USA,Medium,v2.0
+AML_00295,SANCTION Rule 295,SANCTION,Source of funds verification is mandatory for high-value customers.,UK,Low,v3.0
+AML_00296,ONBOARDING Rule 296,ONBOARDING,Beneficial ownership verification is required for business accounts.,USA,Medium,v1.0
+AML_00297,PEP Rule 297,PEP,Source of funds verification is mandatory for high-value customers.,India,Low,v1.0
+AML_00298,ONBOARDING Rule 298,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,Critical,v4.0
+AML_00299,ONBOARDING Rule 299,ONBOARDING,Customers appearing on sanctions lists must be rejected immediately.,USA,Medium,v1.0
+AML_00300,SANCTION Rule 300,SANCTION,Suspicious activity reports must be filed for unusual behavior.,USA,Medium,v2.0
+AML_00301,COUNTRY_RISK Rule 301,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,USA,Medium,v4.0
+AML_00302,PEP Rule 302,PEP,Customers with incomplete documentation must be placed under manual review.,India,Medium,v4.0
+AML_00303,ONBOARDING Rule 303,ONBOARDING,Customers from high-risk countries require additional verification.,USA,High,v3.0
+AML_00304,COUNTRY_RISK Rule 304,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,USA,Medium,v2.0
+AML_00305,ONBOARDING Rule 305,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,USA,Low,v2.0
+AML_00306,AML Rule 306,AML,Address proof must be verified during onboarding.,India,Medium,v2.0
+AML_00307,AML Rule 307,AML,Customers from high-risk countries require additional verification.,UK,Critical,v1.0
+AML_00308,EDD Rule 308,EDD,Transactions inconsistent with customer profile should trigger AML review.,USA,High,v4.0
+AML_00309,AML Rule 309,AML,Address proof must be verified during onboarding.,USA,Critical,v4.0
+AML_00310,SANCTION Rule 310,SANCTION,Customers with incomplete documentation must be placed under manual review.,India,Medium,v3.0
+AML_00311,SANCTION Rule 311,SANCTION,Suspicious activity reports must be filed for unusual behavior.,Global,Low,v2.0
+AML_00312,SANCTION Rule 312,SANCTION,Address proof must be verified during onboarding.,India,Low,v4.0
+AML_00313,CDD Rule 313,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Low,v4.0
+AML_00314,AML Rule 314,AML,Customers appearing on sanctions lists must be rejected immediately.,Global,High,v1.0
+AML_00315,CDD Rule 315,CDD,Customers with incomplete documentation must be placed under manual review.,UK,High,v3.0
+AML_00316,CDD Rule 316,CDD,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v2.0
+AML_00317,CDD Rule 317,CDD,Address proof must be verified during onboarding.,USA,Low,v5.0
+AML_00318,ONBOARDING Rule 318,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,India,Low,v2.0
+AML_00319,CDD Rule 319,CDD,Source of funds verification is mandatory for high-value customers.,Global,Low,v4.0
+AML_00320,EDD Rule 320,EDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Medium,v5.0
+AML_00321,CDD Rule 321,CDD,Transactions inconsistent with customer profile should trigger AML review.,UK,Low,v4.0
+AML_00322,EDD Rule 322,EDD,Address proof must be verified during onboarding.,USA,High,v3.0
+AML_00323,PEP Rule 323,PEP,Identity verification must be completed before account activation.,India,Medium,v2.0
+AML_00324,COUNTRY_RISK Rule 324,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,UK,High,v5.0
+AML_00325,AML Rule 325,AML,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v5.0
+AML_00326,COUNTRY_RISK Rule 326,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,India,Low,v1.0
+AML_00327,EDD Rule 327,EDD,Customers appearing on sanctions lists must be rejected immediately.,India,Critical,v1.0
+AML_00328,COUNTRY_RISK Rule 328,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,Global,Medium,v2.0
+AML_00329,CDD Rule 329,CDD,Customers from high-risk countries require additional verification.,UK,High,v4.0
+AML_00330,ONBOARDING Rule 330,ONBOARDING,Beneficial ownership verification is required for business accounts.,India,Low,v5.0
+AML_00331,SANCTION Rule 331,SANCTION,Customers from high-risk countries require additional verification.,India,Medium,v4.0
+AML_00332,SANCTION Rule 332,SANCTION,Address proof must be verified during onboarding.,Global,Low,v3.0
+AML_00333,AML Rule 333,AML,Transactions inconsistent with customer profile should trigger AML review.,India,High,v1.0
+AML_00334,ONBOARDING Rule 334,ONBOARDING,Customers from high-risk countries require additional verification.,USA,High,v1.0
+AML_00335,SANCTION Rule 335,SANCTION,Beneficial ownership verification is required for business accounts.,USA,Critical,v3.0
+AML_00336,COUNTRY_RISK Rule 336,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,USA,High,v3.0
+AML_00337,CDD Rule 337,CDD,Address proof must be verified during onboarding.,UK,Low,v1.0
+AML_00338,SANCTION Rule 338,SANCTION,Customers from high-risk countries require additional verification.,Global,Low,v5.0
+AML_00339,PEP Rule 339,PEP,Customers with incomplete documentation must be placed under manual review.,Global,High,v4.0
+AML_00340,COUNTRY_RISK Rule 340,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,High,v3.0
+AML_00341,PEP Rule 341,PEP,Customers appearing on sanctions lists must be rejected immediately.,UK,Critical,v5.0
+AML_00342,CDD Rule 342,CDD,Transactions inconsistent with customer profile should trigger AML review.,India,Medium,v5.0
+AML_00343,SANCTION Rule 343,SANCTION,Address proof must be verified during onboarding.,UK,Critical,v5.0
+AML_00344,ONBOARDING Rule 344,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,India,Critical,v4.0
+AML_00345,AML Rule 345,AML,Customers with incomplete documentation must be placed under manual review.,India,Low,v5.0
+AML_00346,COUNTRY_RISK Rule 346,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,Medium,v1.0
+AML_00347,PEP Rule 347,PEP,Customers appearing on sanctions lists must be rejected immediately.,USA,High,v2.0
+AML_00348,ONBOARDING Rule 348,ONBOARDING,Customers from high-risk countries require additional verification.,UK,Critical,v2.0
+AML_00349,ONBOARDING Rule 349,ONBOARDING,Identity verification must be completed before account activation.,USA,High,v2.0
+AML_00350,CDD Rule 350,CDD,Source of funds verification is mandatory for high-value customers.,USA,Low,v5.0
+AML_00351,COUNTRY_RISK Rule 351,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,USA,High,v5.0
+AML_00352,ONBOARDING Rule 352,ONBOARDING,Customers from high-risk countries require additional verification.,Global,High,v2.0
+AML_00353,ONBOARDING Rule 353,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,UK,Critical,v4.0
+AML_00354,EDD Rule 354,EDD,Customers from high-risk countries require additional verification.,USA,Low,v5.0
+AML_00355,PEP Rule 355,PEP,Transactions inconsistent with customer profile should trigger AML review.,Global,Low,v2.0
+AML_00356,PEP Rule 356,PEP,Suspicious activity reports must be filed for unusual behavior.,Global,High,v1.0
+AML_00357,ONBOARDING Rule 357,ONBOARDING,Customers appearing on sanctions lists must be rejected immediately.,UK,Critical,v4.0
+AML_00358,COUNTRY_RISK Rule 358,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,USA,Critical,v1.0
+AML_00359,COUNTRY_RISK Rule 359,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,USA,High,v1.0
+AML_00360,ONBOARDING Rule 360,ONBOARDING,Address proof must be verified during onboarding.,USA,High,v4.0
+AML_00361,SANCTION Rule 361,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,UK,High,v3.0
+AML_00362,CDD Rule 362,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Critical,v4.0
+AML_00363,CDD Rule 363,CDD,Identity verification must be completed before account activation.,UK,Medium,v5.0
+AML_00364,COUNTRY_RISK Rule 364,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,Global,High,v3.0
+AML_00365,COUNTRY_RISK Rule 365,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,Global,Medium,v5.0
+AML_00366,SANCTION Rule 366,SANCTION,Transactions inconsistent with customer profile should trigger AML review.,UK,Critical,v5.0
+AML_00367,COUNTRY_RISK Rule 367,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,Medium,v2.0
+AML_00368,CDD Rule 368,CDD,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v2.0
+AML_00369,EDD Rule 369,EDD,Customers appearing on sanctions lists must be rejected immediately.,UK,Low,v3.0
+AML_00370,SANCTION Rule 370,SANCTION,Beneficial ownership verification is required for business accounts.,Global,Medium,v5.0
+AML_00371,ONBOARDING Rule 371,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,UK,Critical,v5.0
+AML_00372,CDD Rule 372,CDD,Transactions inconsistent with customer profile should trigger AML review.,UK,Low,v2.0
+AML_00373,CDD Rule 373,CDD,Beneficial ownership verification is required for business accounts.,USA,High,v1.0
+AML_00374,EDD Rule 374,EDD,Identity verification must be completed before account activation.,UK,High,v2.0
+AML_00375,CDD Rule 375,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,High,v2.0
+AML_00376,EDD Rule 376,EDD,Transactions inconsistent with customer profile should trigger AML review.,Global,Critical,v3.0
+AML_00377,SANCTION Rule 377,SANCTION,Identity verification must be completed before account activation.,India,High,v2.0
+AML_00378,COUNTRY_RISK Rule 378,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,USA,Critical,v3.0
+AML_00379,AML Rule 379,AML,Source of funds verification is mandatory for high-value customers.,UK,Medium,v3.0
+AML_00380,SANCTION Rule 380,SANCTION,Beneficial ownership verification is required for business accounts.,USA,High,v3.0
+AML_00381,SANCTION Rule 381,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,India,Low,v1.0
+AML_00382,SANCTION Rule 382,SANCTION,Source of funds verification is mandatory for high-value customers.,USA,High,v3.0
+AML_00383,CDD Rule 383,CDD,Customers with incomplete documentation must be placed under manual review.,USA,High,v4.0
+AML_00384,PEP Rule 384,PEP,Customers with incomplete documentation must be placed under manual review.,UK,Medium,v3.0
+AML_00385,AML Rule 385,AML,Transactions inconsistent with customer profile should trigger AML review.,UK,Critical,v1.0
+AML_00386,ONBOARDING Rule 386,ONBOARDING,Customers from high-risk countries require additional verification.,India,Medium,v1.0
+AML_00387,CDD Rule 387,CDD,Address proof must be verified during onboarding.,India,Medium,v4.0
+AML_00388,PEP Rule 388,PEP,Customers from high-risk countries require additional verification.,India,Critical,v3.0
+AML_00389,SANCTION Rule 389,SANCTION,Customers from high-risk countries require additional verification.,UK,Low,v4.0
+AML_00390,EDD Rule 390,EDD,Customers from high-risk countries require additional verification.,UK,Medium,v1.0
+AML_00391,EDD Rule 391,EDD,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v1.0
+AML_00392,COUNTRY_RISK Rule 392,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,UK,High,v4.0
+AML_00393,COUNTRY_RISK Rule 393,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,USA,Critical,v2.0
+AML_00394,SANCTION Rule 394,SANCTION,Customers from high-risk countries require additional verification.,UK,High,v5.0
+AML_00395,PEP Rule 395,PEP,Source of funds verification is mandatory for high-value customers.,India,Low,v5.0
+AML_00396,CDD Rule 396,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,USA,Medium,v4.0
+AML_00397,EDD Rule 397,EDD,Source of funds verification is mandatory for high-value customers.,India,Critical,v4.0
+AML_00398,EDD Rule 398,EDD,Beneficial ownership verification is required for business accounts.,USA,Medium,v2.0
+AML_00399,COUNTRY_RISK Rule 399,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,India,Critical,v2.0
+AML_00400,ONBOARDING Rule 400,ONBOARDING,Identity verification must be completed before account activation.,USA,Medium,v5.0
+AML_00401,ONBOARDING Rule 401,ONBOARDING,Source of funds verification is mandatory for high-value customers.,Global,Medium,v4.0
+AML_00402,AML Rule 402,AML,Beneficial ownership verification is required for business accounts.,Global,Medium,v4.0
+AML_00403,SANCTION Rule 403,SANCTION,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v5.0
+AML_00404,AML Rule 404,AML,Beneficial ownership verification is required for business accounts.,USA,High,v5.0
+AML_00405,EDD Rule 405,EDD,Suspicious activity reports must be filed for unusual behavior.,Global,High,v5.0
+AML_00406,SANCTION Rule 406,SANCTION,Beneficial ownership verification is required for business accounts.,Global,High,v4.0
+AML_00407,COUNTRY_RISK Rule 407,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,Global,High,v2.0
+AML_00408,ONBOARDING Rule 408,ONBOARDING,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,UK,Low,v4.0
+AML_00409,ONBOARDING Rule 409,ONBOARDING,Identity verification must be completed before account activation.,UK,Low,v2.0
+AML_00410,CDD Rule 410,CDD,Beneficial ownership verification is required for business accounts.,UK,High,v1.0
+AML_00411,COUNTRY_RISK Rule 411,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,UK,High,v5.0
+AML_00412,SANCTION Rule 412,SANCTION,Beneficial ownership verification is required for business accounts.,Global,Low,v1.0
+AML_00413,PEP Rule 413,PEP,Address proof must be verified during onboarding.,India,Low,v5.0
+AML_00414,PEP Rule 414,PEP,Identity verification must be completed before account activation.,India,High,v4.0
+AML_00415,PEP Rule 415,PEP,Address proof must be verified during onboarding.,Global,Critical,v5.0
+AML_00416,SANCTION Rule 416,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,India,Medium,v4.0
+AML_00417,CDD Rule 417,CDD,Customers from high-risk countries require additional verification.,Global,High,v4.0
+AML_00418,SANCTION Rule 418,SANCTION,Source of funds verification is mandatory for high-value customers.,UK,High,v3.0
+AML_00419,SANCTION Rule 419,SANCTION,Customers appearing on sanctions lists must be rejected immediately.,India,Critical,v3.0
+AML_00420,CDD Rule 420,CDD,Customers appearing on sanctions lists must be rejected immediately.,Global,Medium,v5.0
+AML_00421,COUNTRY_RISK Rule 421,COUNTRY_RISK,Customers from Iran must undergo enhanced verification.,Global,Medium,v3.0
+AML_00422,ONBOARDING Rule 422,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,India,Critical,v3.0
+AML_00423,PEP Rule 423,PEP,Customers with incomplete documentation must be placed under manual review.,USA,High,v3.0
+AML_00424,ONBOARDING Rule 424,ONBOARDING,Customers from high-risk countries require additional verification.,UK,Medium,v5.0
+AML_00425,SANCTION Rule 425,SANCTION,Identity verification must be completed before account activation.,USA,Medium,v1.0
+AML_00426,PEP Rule 426,PEP,Customers appearing on sanctions lists must be rejected immediately.,Global,Medium,v5.0
+AML_00427,COUNTRY_RISK Rule 427,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,USA,Critical,v2.0
+AML_00428,COUNTRY_RISK Rule 428,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,Global,Critical,v5.0
+AML_00429,ONBOARDING Rule 429,ONBOARDING,Beneficial ownership verification is required for business accounts.,UK,Critical,v1.0
+AML_00430,ONBOARDING Rule 430,ONBOARDING,Transactions inconsistent with customer profile should trigger AML review.,UK,Low,v2.0
+AML_00431,SANCTION Rule 431,SANCTION,Customers from high-risk countries require additional verification.,UK,Critical,v5.0
+AML_00432,COUNTRY_RISK Rule 432,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,Global,Low,v3.0
+AML_00433,AML Rule 433,AML,Suspicious activity reports must be filed for unusual behavior.,Global,Critical,v3.0
+AML_00434,PEP Rule 434,PEP,Source of funds verification is mandatory for high-value customers.,Global,High,v3.0
+AML_00435,CDD Rule 435,CDD,Suspicious activity reports must be filed for unusual behavior.,UK,Critical,v4.0
+AML_00436,PEP Rule 436,PEP,Customers with incomplete documentation must be placed under manual review.,USA,Low,v5.0
+AML_00437,SANCTION Rule 437,SANCTION,Source of funds verification is mandatory for high-value customers.,UK,High,v3.0
+AML_00438,EDD Rule 438,EDD,Customers with incomplete documentation must be placed under manual review.,India,Medium,v4.0
+AML_00439,ONBOARDING Rule 439,ONBOARDING,Identity verification must be completed before account activation.,India,High,v4.0
+AML_00440,ONBOARDING Rule 440,ONBOARDING,Source of funds verification is mandatory for high-value customers.,India,Medium,v3.0
+AML_00441,PEP Rule 441,PEP,Transactions inconsistent with customer profile should trigger AML review.,UK,Medium,v4.0
+AML_00442,AML Rule 442,AML,Beneficial ownership verification is required for business accounts.,Global,Critical,v1.0
+AML_00443,PEP Rule 443,PEP,Customers with incomplete documentation must be placed under manual review.,UK,Medium,v2.0
+AML_00444,AML Rule 444,AML,Customers appearing on sanctions lists must be rejected immediately.,India,Critical,v1.0
+AML_00445,ONBOARDING Rule 445,ONBOARDING,Identity verification must be completed before account activation.,UK,Medium,v5.0
+AML_00446,SANCTION Rule 446,SANCTION,Beneficial ownership verification is required for business accounts.,USA,Low,v5.0
+AML_00447,SANCTION Rule 447,SANCTION,Address proof must be verified during onboarding.,Global,High,v2.0
+AML_00448,CDD Rule 448,CDD,Beneficial ownership verification is required for business accounts.,India,Critical,v1.0
+AML_00449,AML Rule 449,AML,Transactions inconsistent with customer profile should trigger AML review.,India,Critical,v1.0
+AML_00450,AML Rule 450,AML,Identity verification must be completed before account activation.,USA,Medium,v5.0
+AML_00451,SANCTION Rule 451,SANCTION,Identity verification must be completed before account activation.,India,Medium,v4.0
+AML_00452,CDD Rule 452,CDD,Customers from high-risk countries require additional verification.,Global,High,v3.0
+AML_00453,COUNTRY_RISK Rule 453,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,USA,Critical,v1.0
+AML_00454,ONBOARDING Rule 454,ONBOARDING,Customers from high-risk countries require additional verification.,Global,Medium,v5.0
+AML_00455,ONBOARDING Rule 455,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,UK,Low,v5.0
+AML_00456,PEP Rule 456,PEP,Customers from high-risk countries require additional verification.,Global,Low,v5.0
+AML_00457,CDD Rule 457,CDD,Transactions inconsistent with customer profile should trigger AML review.,UK,Low,v2.0
+AML_00458,COUNTRY_RISK Rule 458,COUNTRY_RISK,Customers from Afghanistan must undergo enhanced verification.,India,High,v3.0
+AML_00459,PEP Rule 459,PEP,Customers with incomplete documentation must be placed under manual review.,UK,Critical,v1.0
+AML_00460,EDD Rule 460,EDD,Transactions inconsistent with customer profile should trigger AML review.,India,High,v1.0
+AML_00461,COUNTRY_RISK Rule 461,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,Low,v4.0
+AML_00462,COUNTRY_RISK Rule 462,COUNTRY_RISK,Customers from Syria must undergo enhanced verification.,India,Medium,v5.0
+AML_00463,ONBOARDING Rule 463,ONBOARDING,Customers from high-risk countries require additional verification.,UK,High,v4.0
+AML_00464,EDD Rule 464,EDD,Customers appearing on sanctions lists must be rejected immediately.,USA,Medium,v1.0
+AML_00465,PEP Rule 465,PEP,Transactions inconsistent with customer profile should trigger AML review.,Global,High,v4.0
+AML_00466,CDD Rule 466,CDD,Suspicious activity reports must be filed for unusual behavior.,India,Medium,v3.0
+AML_00467,AML Rule 467,AML,Customers with incomplete documentation must be placed under manual review.,Global,Low,v1.0
+AML_00468,CDD Rule 468,CDD,Beneficial ownership verification is required for business accounts.,Global,Medium,v5.0
+AML_00469,AML Rule 469,AML,Transactions inconsistent with customer profile should trigger AML review.,USA,Low,v4.0
+AML_00470,CDD Rule 470,CDD,Address proof must be verified during onboarding.,UK,Low,v5.0
+AML_00471,AML Rule 471,AML,Customers from high-risk countries require additional verification.,USA,Low,v5.0
+AML_00472,CDD Rule 472,CDD,Beneficial ownership verification is required for business accounts.,USA,High,v3.0
+AML_00473,PEP Rule 473,PEP,Address proof must be verified during onboarding.,UK,Low,v2.0
+AML_00474,SANCTION Rule 474,SANCTION,Customers from high-risk countries require additional verification.,Global,Critical,v2.0
+AML_00475,AML Rule 475,AML,Identity verification must be completed before account activation.,UK,Critical,v4.0
+AML_00476,COUNTRY_RISK Rule 476,COUNTRY_RISK,Customers from North Korea must undergo enhanced verification.,India,Medium,v4.0
+AML_00477,COUNTRY_RISK Rule 477,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,India,High,v4.0
+AML_00478,EDD Rule 478,EDD,Identity verification must be completed before account activation.,USA,High,v1.0
+AML_00479,PEP Rule 479,PEP,Suspicious activity reports must be filed for unusual behavior.,USA,Low,v3.0
+AML_00480,ONBOARDING Rule 480,ONBOARDING,Source of funds verification is mandatory for high-value customers.,Global,High,v3.0
+AML_00481,SANCTION Rule 481,SANCTION,Customers with incomplete documentation must be placed under manual review.,UK,Medium,v1.0
+AML_00482,SANCTION Rule 482,SANCTION,Customers from high-risk countries require additional verification.,USA,High,v1.0
+AML_00483,ONBOARDING Rule 483,ONBOARDING,Identity verification must be completed before account activation.,Global,Low,v3.0
+AML_00484,EDD Rule 484,EDD,Transactions inconsistent with customer profile should trigger AML review.,UK,High,v4.0
+AML_00485,ONBOARDING Rule 485,ONBOARDING,Customers with incomplete documentation must be placed under manual review.,Global,Critical,v1.0
+AML_00486,AML Rule 486,AML,Customers appearing on sanctions lists must be rejected immediately.,USA,Medium,v2.0
+AML_00487,CDD Rule 487,CDD,Identity verification must be completed before account activation.,India,Critical,v5.0
+AML_00488,ONBOARDING Rule 488,ONBOARDING,Beneficial ownership verification is required for business accounts.,India,High,v2.0
+AML_00489,EDD Rule 489,EDD,Source of funds verification is mandatory for high-value customers.,UK,Medium,v4.0
+AML_00490,CDD Rule 490,CDD,Customers with incomplete documentation must be placed under manual review.,USA,Low,v5.0
+AML_00491,SANCTION Rule 491,SANCTION,Suspicious activity reports must be filed for unusual behavior.,Global,High,v2.0
+AML_00492,COUNTRY_RISK Rule 492,COUNTRY_RISK,Customers from Myanmar must undergo enhanced verification.,UK,Critical,v5.0
+AML_00493,AML Rule 493,AML,Customers with incomplete documentation must be placed under manual review.,USA,High,v3.0
+AML_00494,EDD Rule 494,EDD,Customers appearing on sanctions lists must be rejected immediately.,UK,Low,v5.0
+AML_00495,ONBOARDING Rule 495,ONBOARDING,Suspicious activity reports must be filed for unusual behavior.,USA,High,v5.0
+AML_00496,PEP Rule 496,PEP,Source of funds verification is mandatory for high-value customers.,Global,Low,v1.0
+AML_00497,CDD Rule 497,CDD,Politically Exposed Persons (PEPs) must undergo Enhanced Due Diligence (EDD).,Global,High,v3.0
+AML_00498,EDD Rule 498,EDD,Transactions inconsistent with customer profile should trigger AML review.,UK,Medium,v1.0
+AML_00499,EDD Rule 499,EDD,Suspicious activity reports must be filed for unusual behavior.,Global,High,v1.0
+AML_00500,PEP Rule 500,PEP,Customers appearing on sanctions lists must be rejected immediately.,India,High,v5.0

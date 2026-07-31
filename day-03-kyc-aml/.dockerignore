@@ -1,5 +1,8 @@
-# Never ship real KYC data or secrets into an image
-data/
+# Never ship real KYC data or secrets into an image.
+# EXCEPTION: data/sample_synthetic/ holds the PII-free regulatory KB (synthetic AML
+# rules + KYC guidelines) the startup seed embeds — this subset IS baked in.
+data/*
+!data/sample_synthetic/
 .env
 Neo4j-*.txt
 *credentials*.txt
