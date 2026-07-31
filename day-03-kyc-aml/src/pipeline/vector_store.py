@@ -24,13 +24,19 @@ UPLOAD_BATCH = 1000  # Azure AI Search hard cap: 1000 docs per upload_documents 
 
 
 class VectorStore:
-    def __init__(self) -> None:
+    def __init__(self, index_name: str | None = None,
+                 collection_name: str = "kyc_regulatory_kb") -> None:
+        # index_name / collection_name let a second corpus (e.g. the travel PDFs)
+        # reuse this store against a different Azure index / Chroma collection.
+        # Defaults reproduce the regulatory-KB behaviour every existing caller relies on.
         self.backend = "azure_search" if config.use_azure_search else "chromadb"
+        self.index_name = index_name or config.search_index
+        self.collection_name = collection_name
         self._client = None
         self._index_client = None
         self._index_ready = False
         self._collection = None
-        logger.info("Vector store backend: %s", self.backend)
+        logger.info("Vector store backend: %s (index=%s)", self.backend, self.index_name)
 
     def _credential(self):
         from azure.core.credentials import AzureKeyCredential
@@ -48,7 +54,7 @@ class VectorStore:
 
             self._client = SearchClient(
                 endpoint=config.search_endpoint,
-                index_name=config.search_index,
+                index_name=self.index_name,
                 credential=self._credential(),
             )
         return self._client
@@ -108,15 +114,15 @@ class VectorStore:
             ),
         )])
         index = SearchIndex(
-            name=config.search_index, fields=fields,
+            name=self.index_name, fields=fields,
             vector_search=vector_search, semantic_search=semantic_search,
         )
         try:
             self._search_index_client().create_or_update_index(index)
             logger.info("Ensured Azure AI Search index '%s' (%d-dim vectors)",
-                        config.search_index, vector_dim)
+                        self.index_name, vector_dim)
         except ResourceExistsError:
-            logger.info("Azure AI Search index '%s' already exists", config.search_index)
+            logger.info("Azure AI Search index '%s' already exists", self.index_name)
         self._index_ready = True
 
     def document_count(self) -> int:
@@ -135,7 +141,7 @@ class VectorStore:
             import chromadb
             client = chromadb.PersistentClient(path=config.chroma_persist_dir)
             self._collection = client.get_or_create_collection(
-                name="kyc_regulatory_kb", metadata={"hnsw:space": "cosine"}
+                name=self.collection_name, metadata={"hnsw:space": "cosine"}
             )
         return self._collection
 
