@@ -12,6 +12,9 @@ from src.config import config
 logger = logging.getLogger(__name__)
 
 LOCAL_DIM = 384
+# Azure OpenAI caps a single embeddings request at 2048 inputs; stay well under it
+# so seeding thousands of KB chunks doesn't 400 on an oversized array.
+EMBED_BATCH = 256
 
 
 class Embedder:
@@ -39,10 +42,13 @@ class Embedder:
             return []
         if self._use_azure:
             try:
-                resp = self._azure_client().embeddings.create(
-                    model=config.embed_deployment, input=texts
-                )
-                return [d.embedding for d in resp.data]
+                out: list[list[float]] = []
+                for i in range(0, len(texts), EMBED_BATCH):
+                    resp = self._azure_client().embeddings.create(
+                        model=config.embed_deployment, input=texts[i:i + EMBED_BATCH]
+                    )
+                    out.extend(d.embedding for d in resp.data)
+                return out
             except Exception as exc:
                 logger.warning("Azure embedding failed (%s) — using local fallback", exc)
                 self._use_azure = False

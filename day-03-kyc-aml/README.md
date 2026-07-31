@@ -210,7 +210,8 @@ Everything lands in **one resource group** (`rg-kyc-aml-dev`), in `swedencentral
 | Key Vault Secrets User | Key Vault | resolve the Neo4j URI/password references |
 | Cognitive Services OpenAI User | Foundry account | embeddings (account OpenAI endpoint) |
 | Azure AI User (Foundry User) | Foundry account | create/run agents (project endpoint) |
-| Search Index Data Contributor | AI Search | hybrid retrieval on the KB index |
+| Search Index Data Contributor | AI Search | read/write KB documents (hybrid retrieval) |
+| Search Service Contributor | AI Search | create the KB index at startup (`ensure_index`) |
 | Cognitive Services User | Document Intelligence | OCR |
 
 Keyless throughout (requires *User Access Administrator* on the deploying principal). Only Neo4j — a Neo4j-managed SaaS with no Azure AD path — is reached via a Key Vault secret.

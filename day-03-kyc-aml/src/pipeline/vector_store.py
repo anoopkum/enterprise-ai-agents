@@ -15,30 +15,119 @@ from src.pipeline.embeddings import embedder
 logger = logging.getLogger(__name__)
 
 
+# text-embedding-3-large emits 3072-dim vectors; the index vector field must match
+# whatever the embedder actually produces (see upsert → ensure_index).
+AZURE_EMBED_DIM = 3072
+SEMANTIC_CONFIG = "kyc-semantic"
+VECTOR_PROFILE = "kyc-hnsw"
+UPLOAD_BATCH = 1000  # Azure AI Search hard cap: 1000 docs per upload_documents call
+
+
 class VectorStore:
     def __init__(self) -> None:
         self.backend = "azure_search" if config.use_azure_search else "chromadb"
         self._client = None
+        self._index_client = None
+        self._index_ready = False
         self._collection = None
         logger.info("Vector store backend: %s", self.backend)
+
+    def _credential(self):
+        from azure.core.credentials import AzureKeyCredential
+        from azure.identity import DefaultAzureCredential
+
+        return (
+            AzureKeyCredential(config.search_key)
+            if config.search_key else DefaultAzureCredential()
+        )
 
     # ─── Azure AI Search ───
     def _search_client(self):
         if self._client is None:
             from azure.search.documents import SearchClient
-            from azure.core.credentials import AzureKeyCredential
-            from azure.identity import DefaultAzureCredential
 
-            credential = (
-                AzureKeyCredential(config.search_key)
-                if config.search_key else DefaultAzureCredential()
-            )
             self._client = SearchClient(
                 endpoint=config.search_endpoint,
                 index_name=config.search_index,
-                credential=credential,
+                credential=self._credential(),
             )
         return self._client
+
+    def _search_index_client(self):
+        if self._index_client is None:
+            from azure.search.documents.indexes import SearchIndexClient
+
+            self._index_client = SearchIndexClient(
+                endpoint=config.search_endpoint, credential=self._credential()
+            )
+        return self._index_client
+
+    def ensure_index(self, vector_dim: int = AZURE_EMBED_DIM) -> None:
+        """Create the regulatory-KB index if it doesn't exist.
+
+        Hybrid retrieval needs a schema Azure AI Search can't infer from uploads:
+        a vector field of the right dimensionality + an HNSW profile, plus the
+        `kyc-semantic` configuration the reranker path references. create_or_update
+        is idempotent, so this is safe to call on every startup. Requires the app
+        identity to hold *Search Service Contributor* (control-plane).
+        """
+        from azure.core.exceptions import ResourceExistsError
+        from azure.search.documents.indexes.models import (
+            SearchField, SearchFieldDataType, SearchIndex,
+            SemanticConfiguration, SemanticField, SemanticPrioritizedFields,
+            SemanticSearch, SimpleField, SearchableField,
+            VectorSearch, VectorSearchProfile, HnswAlgorithmConfiguration,
+        )
+
+        fields = [
+            SimpleField(name="chunk_id", type=SearchFieldDataType.String, key=True),
+            SearchableField(name="text", type=SearchFieldDataType.String),
+            SimpleField(name="doc_type", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="source_format", type=SearchFieldDataType.String, filterable=True),
+            SearchableField(name="reference", type=SearchFieldDataType.String),
+            SimpleField(name="framework", type=SearchFieldDataType.String, filterable=True),
+            SimpleField(name="confidence", type=SearchFieldDataType.Double, filterable=True),
+            SearchField(
+                name="vector",
+                type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                searchable=True,
+                vector_search_dimensions=vector_dim,
+                vector_search_profile_name=VECTOR_PROFILE,
+            ),
+        ]
+        vector_search = VectorSearch(
+            algorithms=[HnswAlgorithmConfiguration(name="kyc-hnsw-algo")],
+            profiles=[VectorSearchProfile(
+                name=VECTOR_PROFILE, algorithm_configuration_name="kyc-hnsw-algo")],
+        )
+        semantic_search = SemanticSearch(configurations=[SemanticConfiguration(
+            name=SEMANTIC_CONFIG,
+            prioritized_fields=SemanticPrioritizedFields(
+                content_fields=[SemanticField(field_name="text")],
+                keywords_fields=[SemanticField(field_name="reference")],
+            ),
+        )])
+        index = SearchIndex(
+            name=config.search_index, fields=fields,
+            vector_search=vector_search, semantic_search=semantic_search,
+        )
+        try:
+            self._search_index_client().create_or_update_index(index)
+            logger.info("Ensured Azure AI Search index '%s' (%d-dim vectors)",
+                        config.search_index, vector_dim)
+        except ResourceExistsError:
+            logger.info("Azure AI Search index '%s' already exists", config.search_index)
+        self._index_ready = True
+
+    def document_count(self) -> int:
+        """Docs already in the index (Azure) / collection (Chroma). -1 if unknown."""
+        try:
+            if self.backend == "azure_search":
+                return self._search_client().get_document_count()
+            return self._chroma_collection().count()
+        except Exception as exc:
+            logger.warning("Could not read document count: %s", exc)
+            return -1
 
     # ─── ChromaDB ───
     def _chroma_collection(self):
@@ -55,6 +144,10 @@ class VectorStore:
             return 0
         vectors = embedder.embed([c.text for c in chunks])
         if self.backend == "azure_search":
+            if not self._index_ready:
+                # Match the index vector dim to what the embedder actually produced,
+                # so a local-fallback embedding (LOCAL_DIM) still yields a usable index.
+                self.ensure_index(len(vectors[0]) if vectors else AZURE_EMBED_DIM)
             return self._upsert_azure(chunks, vectors)
         return self._upsert_chroma(chunks, vectors)
 
@@ -71,7 +164,10 @@ class VectorStore:
                 "confidence": float(c.confidence),
                 "vector": v,
             })
-        self._search_client().upload_documents(documents=docs)
+        # Azure AI Search caps a single upload at 1000 docs — batch to stay under it.
+        client = self._search_client()
+        for i in range(0, len(docs), UPLOAD_BATCH):
+            client.upload_documents(documents=docs[i:i + UPLOAD_BATCH])
         logger.info("Uploaded %d docs to Azure AI Search", len(docs))
         return len(docs)
 

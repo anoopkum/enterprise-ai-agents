@@ -166,10 +166,19 @@ resource "azurerm_role_assignment" "ca_to_foundry_agents" {
   principal_id       = module.containerapp.principal_id
 }
 
-# Search — hybrid retrieval reads/writes the regulatory-KB index via Azure AD.
+# Search — hybrid retrieval reads/writes documents in the regulatory-KB index (data plane).
 resource "azurerm_role_assignment" "ca_to_search" {
   scope                = module.search.id
   role_definition_name = "Search Index Data Contributor"
+  principal_id         = module.containerapp.principal_id
+}
+
+# Search (control plane) — the app CREATES the KB index at startup (ensure_index).
+# Data Contributor only covers documents; creating/updating an index definition
+# needs Search Service Contributor.
+resource "azurerm_role_assignment" "ca_to_search_service" {
+  scope                = module.search.id
+  role_definition_name = "Search Service Contributor"
   principal_id         = module.containerapp.principal_id
 }
 

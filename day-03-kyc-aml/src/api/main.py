@@ -33,10 +33,18 @@ def _bootstrap_knowledge() -> None:
     from src.graph.builder import build_graph
 
     try:
-        chunks = load_regulatory_chunks()
-        if chunks:
-            vector_store.upsert(chunks)
-            logger.info("Seeded %d regulatory chunks into %s", len(chunks), vector_store.backend)
+        # min_replicas=0 means the container cold-starts on every wake and re-runs
+        # this seed. Skip the (costly) re-embed when the store is already populated.
+        existing = vector_store.document_count()
+        if existing > 0:
+            logger.info("KB already seeded (%d docs in %s) — skipping", existing, vector_store.backend)
+        else:
+            chunks = load_regulatory_chunks()
+            if chunks:
+                vector_store.upsert(chunks)
+                logger.info("Seeded %d regulatory chunks into %s", len(chunks), vector_store.backend)
+            else:
+                logger.warning("No regulatory KB found under DATA_DIR — vector store left empty")
     except Exception as exc:
         logger.warning("KB seeding skipped: %s", exc)
 
