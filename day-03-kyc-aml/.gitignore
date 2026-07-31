@@ -4,6 +4,8 @@
 data/*
 !data/.gitkeep
 !data/sample_synthetic/
+# PII-free: Document Intelligence OCR output of the public travel-brochure PDFs.
+!data/extracted/
 
 # Env & secrets
 .env

@@ -1,0 +1,122 @@
+[
+  {
+    "file": "Dubai Brochure.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 984,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.995,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 26,
+        "word_count": 158,
+        "mean_word_confidence": 0.995
+      }
+    ],
+    "tables": []
+  },
+  {
+    "file": "Las Vegas Brochure.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 1130,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.9953,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 40,
+        "word_count": 184,
+        "mean_word_confidence": 0.9953
+      }
+    ],
+    "tables": []
+  },
+  {
+    "file": "London Brochure.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 1305,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.9926,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 39,
+        "word_count": 200,
+        "mean_word_confidence": 0.9926
+      }
+    ],
+    "tables": []
+  },
+  {
+    "file": "Margies Travel Company Info.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 736,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.936,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 27,
+        "word_count": 127,
+        "mean_word_confidence": 0.936
+      }
+    ],
+    "tables": []
+  },
+  {
+    "file": "New York Brochure.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 1458,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.9929,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 36,
+        "word_count": 239,
+        "mean_word_confidence": 0.9929
+      }
+    ],
+    "tables": []
+  },
+  {
+    "file": "San Francisco Brochure.pdf",
+    "model_id": "prebuilt-layout",
+    "content_chars": 1612,
+    "page_count": 1,
+    "table_count": 0,
+    "mean_word_confidence": 0.995,
+    "pages": [
+      {
+        "page_number": 1,
+        "width": 8.2639,
+        "height": 11.6806,
+        "unit": "inch",
+        "line_count": 36,
+        "word_count": 248,
+        "mean_word_confidence": 0.995
+      }
+    ],
+    "tables": []
+  }
+]

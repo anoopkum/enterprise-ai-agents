@@ -1,0 +1,20 @@
+{
+  "file": "Margies Travel Company Info.pdf",
+  "model_id": "prebuilt-layout",
+  "content_chars": 736,
+  "page_count": 1,
+  "table_count": 0,
+  "mean_word_confidence": 0.936,
+  "pages": [
+    {
+      "page_number": 1,
+      "width": 8.2639,
+      "height": 11.6806,
+      "unit": "inch",
+      "line_count": 27,
+      "word_count": 127,
+      "mean_word_confidence": 0.936
+    }
+  ],
+  "tables": []
+}
