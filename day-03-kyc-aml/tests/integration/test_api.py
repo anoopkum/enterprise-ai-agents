@@ -55,6 +55,16 @@ def client():
 
 
 @pytest.mark.integration
+class TestRoot:
+    def test_root_redirects_to_docs_in_dev(self, client):
+        # A bare-URL visit must land on Swagger, not a 404.
+        c, _ = client
+        resp = c.get("/", follow_redirects=False)
+        assert resp.status_code in (307, 308)
+        assert resp.headers["location"] == "/docs"
+
+
+@pytest.mark.integration
 class TestHealth:
     def test_health_returns_200(self, client):
         c, _ = client

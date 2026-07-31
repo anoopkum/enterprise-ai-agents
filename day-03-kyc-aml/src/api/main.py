@@ -13,7 +13,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from src.config import config
 from src.api.models import ScreenRequest, KYCDecision
@@ -90,6 +90,16 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 app.add_middleware(RateLimitMiddleware, max_requests=60, window_seconds=60)
+
+
+@app.get("/", include_in_schema=False)
+async def root():
+    # A bare-URL visit should land somewhere useful, not a 404. In dev, send the
+    # browser to the Swagger UI; in prod /docs is disabled, so return a small
+    # service descriptor pointing at the real endpoints instead.
+    if config.environment != "prod":
+        return RedirectResponse(url="/docs")
+    return {"service": "kyc-aml-compliance-agent", "endpoints": ["/health", "/screen", "/decisions/{customer_id}"]}
 
 
 @app.get("/health")
