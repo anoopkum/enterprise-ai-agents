@@ -24,9 +24,12 @@ class TestLocalEmbedding:
         assert all(len(v) == LOCAL_DIM for v in vecs)
 
     def test_local_is_deterministic(self):
-        emb = Embedder()
-        emb._use_azure = False
-        assert emb.embed(["same text"]) == emb.embed(["same text"])
+        # Two independent calls on equal input must produce equal vectors.
+        emb1, emb2 = Embedder(), Embedder()
+        emb1._use_azure = emb2._use_azure = False
+        first = emb1.embed(["same text"])
+        second = emb2.embed(["same text"])
+        assert first == second
 
 
 @pytest.mark.unit
