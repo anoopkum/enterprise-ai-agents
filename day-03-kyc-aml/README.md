@@ -177,6 +177,28 @@ No code changes — the capability flags in `config.py` route to the right backe
 
 ---
 
+## Ask the KB — Streamlit UI
+
+A natural-language RAG front-end over the retrieval stack (`vector_store → reranker → LLM`),
+running **in-process** — no API server required. Pick a corpus, ask a question, get a
+grounded answer plus the exact source chunks it cited.
+
+Two selectable corpora:
+- **Regulatory KB** — the live `kyc-regulatory-kb` index (AML rules + KYC guidelines) that also powers `/screen`.
+- **Travel brochures** — the Document Intelligence OCR extractions under `data/extracted/`, indexed on demand into a **separate** `travel-kb` index (never mixed into screening). Click *Index travel brochures* in the sidebar once to populate it.
+
+```bash
+pip install -r requirements-ui.txt
+streamlit run ui/streamlit_app.py
+```
+
+Reads the same env vars as the app. With no cloud configured it falls back to local
+ChromaDB retrieval and an **extractive** (no-LLM) answer, so it's usable offline.
+Streamlit is a dev/UI-only dependency (`requirements-ui.txt`) and is **not** installed
+into the API container image.
+
+---
+
 ## Infrastructure (Terraform)
 
 `azurerm` **4.81.0**, state in an Azure Blob backend (`rg-tfstate-kyc / stkycamltfstate`). Auth is AAD-based — no storage keys.
@@ -278,15 +300,17 @@ With `Security Gate` required, a PR cannot merge unless lint, SAST, secret-scan,
 day-03-kyc-aml/
 ├── src/
 │   ├── ingestion/     # multi-format loaders, OCR, doc classifier, Chunk model
-│   ├── pipeline/      # kb_loader, chunker, embeddings, vector_store, reranker
+│   ├── pipeline/      # kb_loader, chunker, embeddings, vector_store, reranker, rag_query
 │   ├── graph/         # Neo4j / NetworkX store, schema, builder (UNWIND-batched)
 │   ├── agents/        # identity, screening, aml (RAG), decision, orchestrator, llm
 │   ├── guardrails/    # hallucination detector, PII/injection/output guardrails
 │   ├── eval/          # RAGAS-style decision + hallucination harness
 │   ├── api/           # FastAPI app, Pydantic models, rate-limit middleware
 │   └── config.py      # capability flags → progressive fallback
+├── ui/                # Streamlit RAG query UI (in-process, dev-only)
+├── data/extracted/    # Document Intelligence OCR output of the travel PDFs
 ├── terraform/         # AI Foundry (models + project), Document Intelligence, AI Search, Key Vault, ACR, Container Apps modules
 ├── tests/             # unit + integration
 ├── Dockerfile
-└── requirements*.txt
+└── requirements*.txt  # requirements.txt (app), -dev (tests), -ui (Streamlit)
 ```

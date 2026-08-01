@@ -1,0 +1,4 @@
+# Streamlit RAG query UI — local/dev only. Deliberately NOT installed into the
+# API container image (see Dockerfile), so the API surface stays minimal.
+-r requirements.txt
+streamlit>=1.40.0
